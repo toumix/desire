@@ -52,6 +52,8 @@ propose a change).
   consent.
 - Update branches by merging the base in — never rebase, never force-push: published history is
   append-only in every repo.
+- Answer a review thread once the change has landed — the shortest true line, "done in <sha>" —
+  then RESOLVE it. An open thread means something is still owed.
 
 ## Meta-rule
 When the rules are unclear, conflicting, or wrong in practice, never silently pick a side: act
