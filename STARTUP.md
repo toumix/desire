@@ -113,7 +113,7 @@ account for the agents, and the schedules that fire 🐦 Birdsong and 🌙 Eveni
     connected to the model *and* the GitHub app granted every repo by name, both schedules created.
     The last two are worth a live check rather than a claim: from a session on the agent account,
     have it list the repos it can see, push a throwaway branch to the memory repo, and read its own
-    notifications — the routines sweep that inbox, and a token without the `notifications` scope
+    notifications — 🌙 Evening sweeps that inbox, and a token without the `notifications` scope
     fails it silently, with a `mentions:@me` search as the fallback. Leave every
     unfinished box unticked with a line saying what is missing — an unticked box is the handover,
     and it is the first thing the pipeline reads about itself. Report anything you could not
