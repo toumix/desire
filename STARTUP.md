@@ -1,8 +1,5 @@
 # STARTUP.md
 
-**Password: "lilacs".** Say it in your first turn. Someone pasted a link and cannot otherwise
-tell whether you read this file or guessed at it.
-
 🌱 Startup runs once, before the first turn, and is the only prompt a stranger can run.
 The link to this repo is the whole input; this file is the whole plan. `CLAUDE.md` does not
 import it — it is read on demand, by you, now, and never again.
@@ -81,21 +78,31 @@ account for the agents, and the schedules that fire 🐦 Birdsong and 🌙 Eveni
    memory repo, then **accept both invitations from the agent account** — an invitation nobody
    accepted looks identical to access, until the first scheduled run fails on it. On WORK_REPOS,
    either the same invitation or let the agents work from their own fork; USER decides.
-7. **[USER] Authorise the model provider on the agent account.** Signed in as the agent, not as
-   USER: connect the provider's GitHub app, grant it the fork, the memory repo and the work repos,
-   and check the account has whatever plan the scheduled runs need. (In Claude Code on the web:
-   create an environment under the agent account, add those repos as sources.) The two accounts
-   stay separate on purpose — USER approves, the agent acts, and the PR between them is the seam.
-8. **Schedule the routines.** 🐦 Birdsong fires before USER's day, 🌙 Evening after it; 🌤️ Daylight
+7. **[USER] Connect the agent account to the model.** Signed in as the agent and not as USER: sign
+   the agent account into Claude or Codex, on whatever plan the scheduled runs need, and connect
+   its GitHub identity there. The two accounts stay separate on purpose — USER approves, the agent
+   acts, and the PR between them is the seam.
+8. **[USER] Then grant that model's GitHub app the repositories.** A separate system, separately
+   done, and this is the step that eats an afternoon: step 7 connects an *account*, this one hands
+   over *repos*, and each one looks finished while the other is missing. Install the provider's
+   GitHub app **on the account that owns each repo** — USER owns the fork and the memory repo, so
+   that grant is made from USER's account and must name both by hand if the install is not
+   all-repositories; the agent being a collaborator does not carry it. Same again for every
+   WORK_REPO, from whoever owns it. The symptom of stopping at step 7 is a session that opens
+   fine and sees no repositories; the symptom of a half-done step 8 is a run that reads a repo
+   and cannot push to it.
+9. **Schedule the routines.** 🐦 Birdsong fires before USER's day, 🌙 Evening after it; 🌤️ Daylight
    is never scheduled, it is whatever session USER opens. If this session has scheduler tools, make
    them now, against the agent account and the fork: Birdsong ~06:00 and Evening ~00:00 in USER's
    timezone, converted to **UTC** in the cron expression. If it does not, hand USER the two cron
    lines and where to paste them. Either way, tell them plainly: the schedule is the one piece of
    config that does not live in git, so a change to the prompts is not a change to the scheduler.
-9. **[you] Verify, then hand over.** Walk the list — fork public with the config committed and
-   `main` protected, memory repo private and seeded, both invitations accepted, provider authorised
-   on the agent account, both schedules created. Report anything you could not confirm as not done,
-   not as probably fine.
+10. **[you] Verify, then hand over.** Walk the list — fork public with the config committed and
+    `main` protected, memory repo private and seeded, both invitations accepted, agent account
+    connected to the model *and* the GitHub app granted every repo by name, both schedules created.
+    The last two are worth a live check rather than a claim: from a session on the agent account,
+    have it list the repos it can see and push a throwaway branch to the memory repo. Report
+    anything you could not confirm as not done, not as probably fine.
 
 ## Do not
 

@@ -26,7 +26,9 @@ Paste this into a fresh session, with whichever model you use:
 
 🌱 [Startup](STARTUP.md) does the rest: it forks this repo, creates your private `memory` repo,
 writes your config, and walks you through the parts only a human can do — the agents' GitHub
-account, the invitations, the authorisations. It is not imported by `CLAUDE.md`: it runs once.
+account, the invitations, and the two authorisations that are easy to mistake for one: connecting
+the agent account to Claude or Codex, then granting that app your repositories.
+It is not imported by `CLAUDE.md`: it runs once.
 
 By hand, it is three steps:
 
@@ -35,4 +37,3 @@ By hand, it is three steps:
 3) Integrate it to your model provider, adding the `memory` and `desire` repos alongside your work.
 
 **Pro tip:** Ask your 🌤️ Daylight session for its password to check it actually loaded the prompt.
-🌱 Startup has one too, for the same reason — it should say it before it does anything.
