@@ -20,8 +20,19 @@ because every line of it is loaded into every session. Some guiding principles:
 
 ## Get started
 
+Paste this into a fresh session, with whichever model you use:
+
+> Set me up with https://github.com/toumix/desire — read `STARTUP.md` and walk me through it.
+
+🌱 [Startup](STARTUP.md) does the rest: it forks this repo, creates your private `memory` repo,
+writes your config, and walks you through the parts only a human can do — the agents' GitHub
+account, the invitations, the authorisations. It is not imported by `CLAUDE.md`: it runs once.
+
+By hand, it is three steps:
+
 1) Open a new GitHub account for your agents, add it as collaborator to your fork for this repo.
 2) Create a new GitHub repo (e.g. called `memory`) and add it to the config block in `AGENTS.md`.
 3) Integrate it to your model provider, adding the `memory` and `desire` repos alongside your work.
 
 **Pro tip:** Ask your 🌤️ Daylight session for its password to check it actually loaded the prompt.
+🌱 Startup has one too, for the same reason — it should say it before it does anything.
