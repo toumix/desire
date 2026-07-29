@@ -11,13 +11,24 @@ set -uo pipefail   # deliberately no -e — an install failure must not abort th
 
 log() { echo "session-start: $*" >&2; }
 
-# Pin the commit identity. AGENT is what should author agent commits, and leaving it
-# to the harness default means every session picks its own — one of them reached for
-# USER's address instead, which GitHub resolved to USER's account (see CHANGELOG.md,
-# 2026-07-29). Global on purpose: it covers WORK_REPOS too, not just this clone.
+# Pin the commit identity. AGENT is what should author agent commits, and leaving it to
+# the harness default means every session picks its own — one reached for USER's address
+# instead, which GitHub resolved to USER's account (see CHANGELOG.md, 2026-07-29).
 # Guarded by CLAUDE_CODE_REMOTE above, so a developer's own machine is never touched.
+#
+# --global alone does NOT hold: /root/.gitconfig is harness-managed and gets rewritten
+# mid-session — a pin set there was found reverted ten minutes later. Repo-local config
+# outranks global and is not managed, so set both: local on every clone already on disk,
+# global as the fallback for anything cloned after this runs.
 git config --global user.name  "toumix-agents"
 git config --global user.email "agents@toumi.email"
+for gitdir in "$(dirname "${CLAUDE_PROJECT_DIR:-$PWD}")"/*/.git; do
+  [ -d "$gitdir" ] || continue   # no clones yet, or the glob matched nothing
+  repo="${gitdir%/.git}"
+  git -C "$repo" config --local user.name  "toumix-agents"
+  git -C "$repo" config --local user.email "agents@toumi.email"
+  log "identity pinned in $repo"
+done
 
 pkgs=()
 command -v jq >/dev/null 2>&1 || pkgs+=(jq)
