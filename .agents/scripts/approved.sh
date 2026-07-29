@@ -14,8 +14,7 @@
 # the silent case, where a :rocket: is the whole signal.
 set -uo pipefail
 
-USER_LOGIN="${USER_LOGIN:-toumix}"        # USER in AGENTS.md ## Config
-APPROVE_EMOJI="${APPROVE_EMOJI:-rocket}"  # APPROVE_EMOJI, likewise
+. "$(dirname "${BASH_SOURCE[0]}")/config.sh"   # USER_LOGIN, APPROVE_EMOJI
 
 url="${1:-}"
 [ -n "$url" ] || { echo "usage: ${0##*/} <comment-url>" >&2; exit 2; }

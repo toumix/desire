@@ -5,12 +5,7 @@
 - 🐦 Birdsong plans before the next day, making sure the pipeline runs smooth
 
 ## Config
-- USER          = "toumix"
-- AGENT         = "toumix-agents"
-- WORK_REPOS    = ["discopy/discopy"]
-- MEMORY_REPO   = "toumix/memory"
-- DESIRE_REPO   = "toumix/desire"
-- APPROVE_EMOJI = "rocket"
+@CONFIG.md
 
 ## Prompts public, memory private
 DESIRE_REPO is public, owned by USER and only its protected branch `main` is TRUSTED.

@@ -12,13 +12,14 @@ set -uo pipefail   # deliberately no -e — an install failure must not abort th
 log() { echo "session-start: $*" >&2; }
 
 # Pin the commit identity — local too, the global one gets rewritten (CHANGELOG.md).
-git config --global user.name  "toumix-agents"
-git config --global user.email "agents@toumi.email"
+. "${CLAUDE_PROJECT_DIR:-$PWD}/.agents/scripts/config.sh"
+git config --global user.name  "$AGENT"
+git config --global user.email "$AGENT_EMAIL"
 for gitdir in "$(dirname "${CLAUDE_PROJECT_DIR:-$PWD}")"/*/.git; do
   [ -d "$gitdir" ] || continue
   repo="${gitdir%/.git}"
-  git -C "$repo" config --local user.name  "toumix-agents"
-  git -C "$repo" config --local user.email "agents@toumi.email"
+  git -C "$repo" config --local user.name  "$AGENT"
+  git -C "$repo" config --local user.email "$AGENT_EMAIL"
   log "identity pinned in $repo"
 done
 

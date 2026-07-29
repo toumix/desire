@@ -4,6 +4,13 @@ What landed on `main`, newest first — when each rule started binding, and what
 
 ## 2026-07-29
 
+**`## Config` moved to its own file** ([#26](https://github.com/toumix/desire/pull/26)) —
+`CONFIG.md`, imported by `AGENTS.md` with `@` and parsed by
+[`config.sh`](.agents/scripts/config.sh), so the hook and the scripts read the values the prompts
+read instead of keeping their own copies. Adds `AGENT_EMAIL`, which the identity pin needs. **This
+costs Codex the config:** it reads root `AGENTS.md` and has no `@` expansion, so those values are
+Claude-only until something else carries them.
+
 **Checking a reaction got a script** ([#26](https://github.com/toumix/desire/pull/26)) —
 [`approved.sh`](.agents/scripts/approved.sh) takes a comment URL and exits 0 only on USER's
 `APPROVE_EMOJI`. The MCP tools return a comment's body and author but never its reactions, and
