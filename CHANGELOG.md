@@ -7,10 +7,11 @@ What landed on `main`, newest first — when each rule started binding, and what
 **The commit identity is pinned** ([#25](https://github.com/toumix/desire/pull/25)) in
 `.claude/hooks/session-start.sh` — the harness default let every session pick its own author, and
 one reached for USER's address, which GitHub resolved to USER's account. `AGENT
-<agents@toumi.email>` is now set at session start, globally, so it covers WORK_REPOS too. A pin,
-not a guarantee: an explicit `-c user.email=` still overrides it, so the real guard is GitHub's
-*block command line pushes that expose my email*, an account setting that lives nowhere in this
-repo.
+<agents@toumi.email>` is now set at session start on every clone on disk. **Repo-local, not just
+`--global`:** `/root/.gitconfig` is harness-managed and gets rewritten mid-session, so a pin set
+there does not survive; `.git/config` outranks it and is left alone. Still not a guarantee — an
+explicit `-c user.email=` beats any config — so the real guard is GitHub's *block command line
+pushes that expose my email*, an account setting that lives nowhere in this repo.
 
 **Evening scans mentions instead of reading an inbox** ([#22](https://github.com/toumix/desire/pull/22),
 closes [#20](https://github.com/toumix/desire/issues/20)). Notifications are a *user* scope and an
