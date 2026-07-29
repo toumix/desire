@@ -5,6 +5,8 @@
 - 🐦 Birdsong plans before the next day, making sure the pipeline runs smooth
 
 ## Config
+The config, and the only copy of it: imported here, sourced by the scripts,
+with USER as `USER_LOGIN` because `$USER` is the shell's own.
 @.agents/scripts/config.sh
 
 ## Prompts public, memory private
