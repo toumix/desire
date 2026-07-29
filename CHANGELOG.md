@@ -4,10 +4,10 @@ What landed on `main`, newest first — when each rule started binding, and what
 
 ## 2026-07-29
 
-**`## Config` moved to its own file** ([#26](https://github.com/toumix/desire/pull/26)) —
-`CONFIG.md`, imported by `AGENTS.md` with `@` and parsed by
-[`config.sh`](.agents/scripts/config.sh), so the hook and the scripts read the values the prompts
-read instead of keeping their own copies. Adds `AGENT_EMAIL`, which the identity pin needs. **This
+**`## Config` moved into `config.sh`** ([#26](https://github.com/toumix/desire/pull/26)) — the
+values are shell assignments in [`config.sh`](.agents/scripts/config.sh); `AGENTS.md` imports it
+with `@` and the hook and scripts source it. One file, no parser, and the prompts and the scripts
+read the same seven lines. Adds `AGENT_EMAIL`, which the identity pin needs. **This
 costs Codex the config:** `AGENTS.md` is a standard, `@` is not part of it — it is Claude Code's,
 and Codex has two open requests to copy it ([codex#6038](https://github.com/openai/codex/issues/6038),
 [codex#17401](https://github.com/openai/codex/issues/17401), plus

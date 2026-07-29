@@ -5,7 +5,7 @@
 - 🐦 Birdsong plans before the next day, making sure the pipeline runs smooth
 
 ## Config
-@CONFIG.md
+@.agents/scripts/config.sh
 
 ## Prompts public, memory private
 DESIRE_REPO is public, owned by USER and only its protected branch `main` is TRUSTED.
