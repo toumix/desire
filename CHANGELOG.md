@@ -8,8 +8,11 @@ What landed on `main`, newest first — when each rule started binding, and what
 `CONFIG.md`, imported by `AGENTS.md` with `@` and parsed by
 [`config.sh`](.agents/scripts/config.sh), so the hook and the scripts read the values the prompts
 read instead of keeping their own copies. Adds `AGENT_EMAIL`, which the identity pin needs. **This
-costs Codex the config:** it reads root `AGENTS.md` and has no `@` expansion, so those values are
-Claude-only until something else carries them.
+costs Codex the config:** `AGENTS.md` is a standard, `@` is not part of it — it is Claude Code's,
+and Codex has two open requests to copy it ([codex#6038](https://github.com/openai/codex/issues/6038),
+[codex#17401](https://github.com/openai/codex/issues/17401), plus
+[agents.md#11](https://github.com/agentsmd/agents.md/issues/11) on the spec itself). So a Codex
+session sees a literal `@CONFIG.md` and gets none of the values.
 
 **Checking a reaction got a script** ([#26](https://github.com/toumix/desire/pull/26)) —
 [`approved.sh`](.agents/scripts/approved.sh) takes a comment URL and exits 0 only on USER's
