@@ -4,6 +4,12 @@ What landed on `main`, newest first — when each rule started binding, and what
 
 ## 2026-07-29
 
+**Checking a reaction got a script** ([#26](https://github.com/toumix/desire/pull/26)) —
+[`approved.sh`](.agents/scripts/approved.sh) takes a comment URL and exits 0 only on USER's
+`APPROVE_EMOJI`. The MCP tools return a comment's body and author but never its reactions, and
+WebFetch 403s on `api.github.com` for want of a `User-Agent`, so every session was rediscovering
+the same `curl`. `AGENTS.md` carries one line pointing at it, not the method.
+
 **The commit identity is pinned** ([#25](https://github.com/toumix/desire/pull/25)) in
 `.claude/hooks/session-start.sh` — the harness default let every session pick its own author, and
 one reached for USER's address, which GitHub resolved to USER's account. `AGENT
