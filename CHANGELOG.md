@@ -4,6 +4,13 @@ What landed on `main`, newest first — when each rule started binding, and what
 
 ## 2026-07-29
 
+**The commit identity is pinned** in `.claude/hooks/session-start.sh` — the harness default let
+every session pick its own author, and one reached for USER's address, which GitHub resolved to
+USER's account. `AGENT <agents@toumi.email>` is now set at session start, globally, so it covers
+WORK_REPOS too. A pin, not a guarantee: an explicit `-c user.email=` still overrides it, so the
+real guard is GitHub's *block command line pushes that expose my email*, which is an account
+setting and lives nowhere in this repo.
+
 **Evening scans mentions instead of reading an inbox** ([#22](https://github.com/toumix/desire/pull/22),
 closes [#20](https://github.com/toumix/desire/issues/20)). Notifications are a *user* scope and an
 app installation has none, so every call 403s while `mentions:AGENT` reaches even repos outside the
