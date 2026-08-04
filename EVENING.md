@@ -7,3 +7,6 @@
 - it translates USER feedback (both direct orders and emoji-approved) into `TODO.md` checkboxes
 - it churns through the PRs `TODO.md`, delegates heavy or parallel coding to worker sub-agents
 - it merges main into its PR before doing any work, it makes sure CI is green before logging off
+- a local run is evidence only for the tests it actually ran: install whatever extra covers the
+  diff before calling a suite green, and say what stayed skipped
+- the green it signs off on is the one on the **last** commit it pushed, review follow-ups included

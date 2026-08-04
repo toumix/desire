@@ -2,6 +2,21 @@
 
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 
+## 2026-08-04
+
+**Evening's green has to be the real one** ([#38](https://github.com/toumix/desire/pull/38)) — two
+bullets under the existing *makes sure CI is green before logging off*, which turned out to say
+less than it looked. On [discopy#517](https://github.com/discopy/discopy/pull/517) Evening reported
+"629 passed, clean" and CI went red on `test_Circuit_spiders`, a test its sandbox had skipped for a
+missing extra; USER had already deleted `TODO.md` to sign the PR off when the red arrived. Two
+separate holes, so two bullets: a suite is evidence only for what it ran, and the green that counts
+is the one on the *last* commit, not the first. The excuse for the first is gone as of
+[discopy#499](https://github.com/discopy/discopy/issues/499) — only `download-r2.pytorch.org` is
+blocked, so the extras do install and `--skip-extra` is a floor, not a ceiling.
+
+Not addressed here: [#33](https://github.com/toumix/desire/issues/33), which asks for its own line
+saying a PR behind its target is agent work. Still open.
+
 ## 2026-07-29
 
 **bob binds to issues, not only to reviews** ([#27](https://github.com/toumix/desire/pull/27)) —
