@@ -1,0 +1,14 @@
+[Unit]
+Description=opencode Telegram bridge
+After=network-online.target
+
+[Service]
+User=YOUR_USER
+EnvironmentFile=/home/YOUR_USER/.aider-bot.env
+EnvironmentFile=/home/YOUR_USER/.opencode-bot.env
+ExecStart=/home/YOUR_USER/venv/bin/python /home/YOUR_USER/opencode_telegram_bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
