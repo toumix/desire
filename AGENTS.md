@@ -10,6 +10,7 @@
 - WORK_REPOS    = ["discopy/discopy", "rel-int/wiki"]
 - MEMORY_REPO   = "toumix/memory"
 - DESIRE_REPO   = "toumix/desire"
+- RULES_REPO    = "rel-int/rules"
 - APPROVE_EMOJI = "rocket"
 - REVIEWER      = "cubic-dev-ai"
 - AGENT_FOOTER  = "claude.ai/code"
@@ -31,6 +32,13 @@ like any other change to the rules.
 WORK_REPOS are where the agents do their actual work, they can be public or private.
 In every repo where they work in, agents are responsible for reading `AGENTS.md`
 and following `RULES.md`, refer to [Turmoil](#turmoil) if these contradict USER.
+
+RULES_REPO is public and the canonical home of `RULES.md`: the always-on rules binding
+every agent in a WORK_REPO — unlike skills, which load only in some contexts, run only
+by our agents, and stay in DESIRE_REPO. When the rules change, repo-file-sync-action
+opens a PR on each target repo: USER's merge is how rules reach it, like any other
+change to the rules. The synced copies are generated — edit upstream, never in place.
+The target list is RULES_REPO's `sync.yml`, starting with discopy.
 
 Before measuring anything against git history — how far a branch is behind, which
 pairs of branches collide — assert the clone is complete: `git rev-parse
