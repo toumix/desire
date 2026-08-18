@@ -136,7 +136,8 @@ USER does not know PR numbers by heart: the first time a pull request or an
 issue is cited anywhere — a comment, a memory file, a live turn — say in a few
 words what it is, not just its number.
 A pull request closing an issue uses GitHub's syntax, one keyword per issue on
-the same line as its reference: what merging closes is read from
+the same line as its reference, fully qualified as `owner/repo#N` when the
+issue lives in another repo: what merging closes is read from
 `closed_by_pull_requests`, never from our prose.
 Answer a thread once the change has landed, then resolve it if your job is done.
 Watch PRs by webhook events only: never schedule timed self check-ins,
