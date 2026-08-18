@@ -5,6 +5,13 @@ Entries state the changes, no explanation of why.
 
 ## 2026-08-18
 
+**One home for `RULES.md`** ([#88](https://github.com/toumix/desire/pull/88),
+closes [#87](https://github.com/toumix/desire/issues/87)) — `RULES_REPO` joins the Config:
+`rel-int/rules` is canonical for `RULES.md`, and repo-file-sync-action opens a PR on each target
+repo when it changes, `sync.yml` listing the targets, discopy first. Rules bind every agent all
+the time and sync as files; skills load only in some contexts, run only by our agents, and stay
+in DESIRE_REPO. Replaces `RULES.md` being canonical in discopy.
+
 **The sweep reads closes** ([#82](https://github.com/toumix/desire/pull/82),
 closes [#81](https://github.com/toumix/desire/issues/81)) — with `--since`, the issues closed
 inside the window are listed with their `state_reason` and who closed them. Extends the
