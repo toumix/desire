@@ -153,8 +153,9 @@ authenticate as different accounts. Assert it before the first write of a turn,
 ## Turmoil
 When the rules are unclear or conflicting never silently pick a side: tell USER
 directly if it's an interactive session or open an issue on DESIRE_REPO otherwise.
-When USER approves a change to the rules, open a PR on DESIRE_REPO,
-and park the ruling as an open issue there too, closed when that PR merges:
+When USER approves a change to the rules, open a PR on DESIRE_REPO —
+on RULES_REPO when the change is to `RULES.md` — and park the ruling as an
+open issue on DESIRE_REPO either way, closed when that PR merges:
 an unmerged PR is read by nobody before planning, an open issue is.
 [`CHANGELOG.md`](CHANGELOG.md) says when each rule landed and what it replaced:
 read it before reopening a ruling, a rule may already have been tried and dropped.

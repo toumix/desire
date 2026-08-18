@@ -10,7 +10,8 @@ closes [#87](https://github.com/toumix/desire/issues/87)) — `RULES_REPO` joins
 `rel-int/rules` is canonical for `RULES.md`, and repo-file-sync-action opens a PR on each target
 repo when it changes, `sync.yml` listing the targets, discopy first. Rules bind every agent all
 the time and sync as files; skills load only in some contexts, run only by our agents, and stay
-in DESIRE_REPO. Replaces `RULES.md` being canonical in discopy.
+in DESIRE_REPO. Turmoil routes approved `RULES.md` changes to RULES_REPO, the parked issue
+staying on DESIRE_REPO. Replaces `RULES.md` being canonical in discopy.
 
 **The sweep reads closes** ([#82](https://github.com/toumix/desire/pull/82),
 closes [#81](https://github.com/toumix/desire/issues/81)) — with `--since`, the issues closed
