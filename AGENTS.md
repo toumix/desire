@@ -11,6 +11,7 @@
 - WORK_REPOS    = ["discopy/discopy", "rel-int/wiki"]
 - MEMORY_REPO   = "toumix/memory"
 - DESIRE_REPO   = "toumix/desire"
+- RULES_REPO    = "rel-int/rules"
 - APPROVE_EMOJI = "rocket"
 - REVIEWER      = "cubic-dev-ai"
 - AGENT_FOOTER  = "claude.ai/code"
@@ -32,6 +33,13 @@ like any other change to the rules.
 WORK_REPOS are where the agents do their actual work, they can be public or private.
 In every repo where they work in, agents are responsible for reading `AGENTS.md`
 and following `RULES.md`, refer to [Turmoil](#turmoil) if these contradict USER.
+
+RULES_REPO is public and the canonical home of `RULES.md`: the always-on rules binding
+every agent in a WORK_REPO — unlike skills, which load only in some contexts, run only
+by our agents, and stay in DESIRE_REPO. When the rules change, repo-file-sync-action
+opens a PR on each target repo: USER's merge is how rules reach it, like any other
+change to the rules. The synced copies are generated — edit upstream, never in place.
+The target list is RULES_REPO's `sync.yml`, starting with discopy.
 
 Before measuring anything against git history — how far a branch is behind, which
 pairs of branches collide — assert the clone is complete: `git rev-parse
@@ -131,7 +139,8 @@ USER does not know PR numbers by heart: the first time a pull request or an
 issue is cited anywhere — a comment, a memory file, a live turn — say in a few
 words what it is, not just its number.
 A pull request closing an issue uses GitHub's syntax, one keyword per issue on
-the same line as its reference: what merging closes is read from
+the same line as its reference, fully qualified as `owner/repo#N` when the
+issue lives in another repo: what merging closes is read from
 `closed_by_pull_requests`, never from our prose.
 Answer a thread once the change has landed, then resolve it if your job is done.
 Watch PRs by webhook events only: never schedule timed self check-ins,
@@ -152,8 +161,9 @@ before the first commit of a turn. Check the branch before pushing,
 ## Turmoil
 When the rules are unclear or conflicting never silently pick a side: tell USER
 directly if it's an interactive session or open an issue on DESIRE_REPO otherwise.
-When USER approves a change to the rules, open a PR on DESIRE_REPO,
-and park the ruling as an open issue there too, closed when that PR merges:
+When USER approves a change to the rules, open a PR on DESIRE_REPO —
+on RULES_REPO when the change is to `RULES.md` — and park the ruling as an
+open issue on DESIRE_REPO either way, closed when that PR merges:
 an unmerged PR is read by nobody before planning, an open issue is.
 [`CHANGELOG.md`](CHANGELOG.md) says when each rule landed and what it replaced:
 read it before reopening a ruling, a rule may already have been tried and dropped.
