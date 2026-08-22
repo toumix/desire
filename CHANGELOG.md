@@ -3,6 +3,14 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-08-22
+
+**No comments in code: only docs**
+([#105](https://github.com/toumix/desire/pull/105), closes
+[#98](https://github.com/toumix/desire/issues/98)) — `RULES.md` rule 5: code carries no comments,
+what a comment would say goes in a docstring, `AGENTS.md` or a README. A shebang, a licence header
+and a linter directive are not comments in this sense.
+
 ## 2026-08-21
 
 **The VM startup script wires the hook for multi-repo sessions**
