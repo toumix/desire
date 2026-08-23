@@ -3,6 +3,16 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-08-23
+
+**A sweep that cannot read GitHub says so and exits 2**
+([#106](https://github.com/toumix/desire/pull/106),
+[#95](https://github.com/toumix/desire/issues/95)) — `sweep.py` catches the 403 whose body
+carries GitHub's capability-gate message, raises `NoAccess` and prints one diagnosis naming
+the hand-sweep path through the `mcp__github__*` tools, instead of dying on an unhandled
+`HTTPError`. Exit 2 is neither clean (0) nor findings (1), so a turn cannot read a crashed
+sweep as a clean one. A 403 that is a rate limit or a permission error still propagates.
+
 ## 2026-08-21
 
 **The VM startup script wires the hook for multi-repo sessions**

@@ -11,6 +11,8 @@ Usage: sweep.py [--since <ISO8601 UTC, e.g. 2026-08-18T00:00:00Z>] <owner/repo>
        # no numbers: every open PR and issue; --since windows comments and closes
 Exit 0 and "clean" on a clean sweep, exit 1 with one line per finding. Open
 `TODO.md` boxes are printed as context and do not make the sweep dirty.
+Exit 2 when the session cannot read repo-scoped GitHub at all: that is neither
+clean nor a finding, and a turn that reads it as either is planning blind.
 """
 import base64
 import datetime
@@ -23,6 +25,26 @@ import urllib.error
 import urllib.request
 
 CONFIG = pathlib.Path(__file__).parents[3] / "config.env"
+GATE = "GitHub access is not enabled for this session"
+DIAGNOSIS = """\
+cannot sweep {repo}: this session has no repo-scoped GitHub access. Not clean.
+
+GitHub said: {detail}
+
+The credential is fine — an unscoped call such as /user authenticates as the
+agent. It is the session that is not wired for repo-scoped GitHub: every
+https://api.github.com/repos/... path 403s with the message above, whatever
+the token, and so does `gh api repos/...`. GraphQL is gated too, serving only
+a pinned set of PR-review operations, and its refusal recommends the REST path
+that is itself blocked. This is desire#95.
+
+Sweep by hand through the `mcp__github__*` tools, which are unaffected:
+`list_issues` and `list_pull_requests` for the open items, `issue_read` and
+`pull_request_read` with `get_comments` for the threads. Reaction *counts* do
+come back, on bodies and on comments alike, so a 🚀 is visible; *who* reacted
+does not, so an approval cannot be attributed. Treat a rocket as a candidate
+and read the thread it sits on.\
+"""
 BOX = re.compile(r"^\s*[-*] \[([^]]*)\]")
 CLAIM = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?"
                    r"(?:Z|[+-]\d{2}:?\d{2})?)?")
@@ -53,6 +75,15 @@ def config(path):
     return setup
 
 
+class NoAccess(Exception):
+    """This session cannot read repo-scoped GitHub at all.
+
+    Distinct from an empty sweep and from a permission error on one resource:
+    nothing can be read, so no finding means no evidence rather than no signal.
+    Raised once, caught once, reported as a diagnosis instead of a traceback.
+    """
+
+
 def get(repo, path):
     """A GitHub REST resource, every page of a listing. A page holds 100 and
     `discopy/discopy` had 153 open items the day this stopped reading one page:
@@ -69,8 +100,14 @@ def get(repo, path):
         token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
         if token:
             request.add_header("Authorization", f"Bearer {token}")
-        with urllib.request.urlopen(request) as response:
-            items = json.load(response)
+        try:
+            with urllib.request.urlopen(request) as response:
+                items = json.load(response)
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode(errors="replace").strip()
+            if error.code == 403 and GATE in detail:
+                raise NoAccess(detail) from None
+            raise
         if not isinstance(items, list):  # a single issue, comment or user
             return items
         results += items
@@ -327,8 +364,13 @@ def main(arguments):
     since = ""  # ISO 8601 UTC sorts lexicographically, so "" is the epoch
     if arguments and arguments[0] == "--since":
         _, since, *arguments = arguments
-    findings = sweep(arguments[0], [int(n) for n in arguments[1:]], since,
-                     config(CONFIG))
+    try:
+        findings = sweep(arguments[0], [int(n) for n in arguments[1:]], since,
+                         config(CONFIG))
+    except NoAccess as gate:
+        print(DIAGNOSIS.format(repo=arguments[0], detail=gate),
+              file=sys.stderr)
+        return 2
     print("\n".join(findings) if findings else "clean", file=sys.stderr)
     return 1 if findings else 0
 
