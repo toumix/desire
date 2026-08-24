@@ -5,15 +5,13 @@
 - 🐦 Birdsong plans before the next day, making sure the pipeline runs smooth
 
 ## Config
-- USER          = "toumix"
-- AGENT         = "toumix-agents"
-- WORK_REPOS    = ["discopy/discopy", "rel-int/wiki"]
-- MEMORY_REPO   = "toumix/memory"
-- DESIRE_REPO   = "toumix/desire"
-- APPROVE_EMOJI = "rocket"
-- REVIEWER      = "cubic-dev-ai"
-- AGENT_FOOTER  = "claude.ai/code"
-- ADOPTED_PRS   = {"discopy/discopy": [347, 363, 366, 393, 399, 400, 401, 416, 442, 443]}
+The values (USER, AGENT, AGENT_EMAIL, WORK_REPOS, MEMORY_REPO, DESIRE_REPO,
+APPROVE_EMOJI, REVIEWER, AGENT_FOOTER, ADOPTED_PRS) live in
+[`config.env`](config.env), the one file that names them — nothing here
+duplicates it. `session-start.sh` reads it before the first commit of a turn,
+`sweep.py`'s `config()` before every sweep. A config.env that cannot be read
+clears the global git identity rather than set a stale one: committing fails
+loudly, and the hook warns when the clearing itself fails.
 
 ADOPTED_PRS maps each repo to pull requests the routines treat as AGENT-owned
 wherever authorship decides — sweeps, scans and the board. Adopting a pull
@@ -67,6 +65,8 @@ comments as a delta rather than re-triaging the whole pile; widen the window aft
 late or dies. It also lists the issues closed inside the window, with `state_reason` and who
 closed them: closing an issue is an answer and it leaves no thread to read. Reacts ignore it: a 🚀
 has no answered state, so it is reported whatever its age, until the thing it sits on closes.
+It also reads [`RULES.md`](RULES.md)'s `TODO.md` off every AGENT-owned head in WORK_REPOS: open
+boxes as context, a claim past its twelve hours and a branch that never carried one as findings.
 
 **React 👀 the moment you pick something up**, before doing the work: an instruction carrying no
 react was never received, one carrying 👀 is in progress. React on the comment or the body itself,
@@ -142,6 +142,21 @@ Every write to GitHub — pull requests, comments, reviews, reactions — goes
 through the MCP tools, and `GITHUB_TOKEN` is for reads only: the two
 authenticate as different accounts. Assert it before the first write of a turn,
 `mcp__github__get_me` must be AGENT.
+
+Commits carry that same identity, AGENT and AGENT_EMAIL, set on every clone
+before the first commit of a turn. Check the branch before pushing,
+`git log --format='%an <%ae>' origin/main..HEAD`.
+
+Commits are signed when the environment provides `AGENTS_SIGNING_KEY`: an SSH
+private key, passphrase-free, that USER pastes into the agent's environment
+variables, and whose public half is registered on AGENT's account as a
+**signing key**. The SessionStart hook starts every run unsigned by clearing
+the global signing config (a fresh clone carries no local one), so stale
+config never outlives its key, installs `openssh-client`
+— git signs through `ssh-keygen -Y sign` — then writes the key to disk and
+sets `commit.gpgsign`, so pushed commits show Verified; a session without the
+variable commits unsigned rather than failing. Leaked, the key can
+only forge the badge: revoke by deleting the public half from AGENT's account.
 
 ## Turmoil
 When the rules are unclear or conflicting never silently pick a side: tell USER

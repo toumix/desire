@@ -1,19 +1,39 @@
 #!/bin/bash
-# SessionStart hook — install the GitHub CLI (and jq) for the scheduled routines.
-# Best-effort: it must NEVER block session start.
-#
-# Installs from Ubuntu's own apt repo (gh lives in noble universe) — the agent proxy
-# allows archive.ubuntu.com but 403s github.com / cli.github.com release downloads.
-set -uo pipefail   # deliberately no -e — an install failure must not abort the hook
+set -uo pipefail
 
-# web / remote sessions only (the routines); do nothing on a local dev machine
 [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
 
 log() { echo "session-start: $*" >&2; }
 
+config="$(cd "$(dirname "$0")/../.." && pwd)/config.env"
+agent="$(sed -n 's/^AGENT=//p' "$config" 2>/dev/null | tail -1)"
+agent_email="$(sed -n 's/^AGENT_EMAIL=//p' "$config" 2>/dev/null | tail -1)"
+if [ -n "$agent" ] && [ -n "$agent_email" ]; then
+  git config --global --replace-all user.name "$agent"
+  git config --global --replace-all user.email "$agent_email"
+  log "git identity: $(git config --global user.name) <$(git config --global user.email)>"
+else
+  if [ ! -r "$config" ]; then
+    log "config.env is unreadable"
+  else
+    [ -n "$agent" ] || log "config.env sets no AGENT"
+    [ -n "$agent_email" ] || log "config.env sets no AGENT_EMAIL"
+  fi
+  cleared=yes
+  for key in user.name user.email; do
+    git config --global --unset-all "$key"
+    case $? in 0 | 5) ;; *) cleared=no ;; esac
+  done
+  log "git identity NOT set (see above) — fix config.env before committing"
+  [ "$cleared" = yes ] || log "could NOT clear the global identity: commits may" \
+    "still be authored as $(git config --global user.name)" \
+    "<$(git config --global user.email)> — clear it by hand"
+fi
+
 pkgs=()
 command -v jq >/dev/null 2>&1 || pkgs+=(jq)
 command -v gh >/dev/null 2>&1 || pkgs+=(gh)
+[ -n "${AGENTS_SIGNING_KEY:-}" ] && ! command -v ssh-keygen >/dev/null 2>&1 && pkgs+=(openssh-client)
 
 if [ ${#pkgs[@]} -gt 0 ]; then
   export DEBIAN_FRONTEND=noninteractive
@@ -25,8 +45,36 @@ if [ ${#pkgs[@]} -gt 0 ]; then
   fi
 fi
 
-# gh reads GH_TOKEN / GITHUB_TOKEN automatically (both are set in this environment)
 [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ] || log "note: no GH_TOKEN/GITHUB_TOKEN in env — gh will be unauthenticated"
 
 command -v gh >/dev/null 2>&1 && log "$(gh --version | head -1)" || true
+
+cleared=yes
+for key in commit.gpgsign user.signingkey gpg.format gpg.ssh.program; do
+  git config --global --unset-all "$key" 2>/dev/null
+  case $? in 0 | 5) ;; *) cleared=no ;; esac
+done
+[ "$cleared" = yes ] || log "could NOT clear the signing config — commits may sign through stale settings"
+if [ -n "${AGENTS_SIGNING_KEY:-}" ] && ! command -v ssh-keygen >/dev/null 2>&1; then
+  log "AGENTS_SIGNING_KEY set but ssh-keygen unavailable — commits stay unsigned"
+elif [ -n "${AGENTS_SIGNING_KEY:-}" ]; then
+  key="$HOME/.ssh/agents_signing"
+  mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+  printf '%s\n' "$AGENTS_SIGNING_KEY" > "$key"
+  chmod 600 "$key"
+  if ssh-keygen -y -P '' -f "$key" > "$key.pub" 2>/dev/null; then
+    git config --global gpg.format ssh
+    # the environment ships a global gpg.ssh.program of its own — pin ours
+    git config --global --replace-all gpg.ssh.program ssh-keygen
+    git config --global user.signingkey "$key"
+    git config --global commit.gpgsign true
+    log "commit signing on ($(ssh-keygen -lf "$key.pub" | awk '{print $2}'))"
+  else
+    rm -f "$key" "$key.pub"
+    log "AGENTS_SIGNING_KEY is not a valid passphrase-free SSH key — commits stay unsigned"
+  fi
+else
+  log "no AGENTS_SIGNING_KEY in env — commits stay unsigned"
+fi
+
 exit 0

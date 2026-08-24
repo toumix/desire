@@ -3,6 +3,56 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-08-21
+
+**The VM startup script wires the hook for multi-repo sessions**
+([#104](https://github.com/toumix/desire/pull/104), closes
+[#103](https://github.com/toumix/desire/issues/103)) — the environment's startup script writes
+`/home/user/.claude/settings.json` pointing `SessionStart` at the hook by absolute path. The
+snippet lands in the README's new Verified commits section, with the key setup — generate,
+register as a signing key, paste into `AGENTS_SIGNING_KEY`. Extends the two hook entries below,
+same day.
+
+**The hook starts unsigned by clearing the whole signing config**
+([#101](https://github.com/toumix/desire/pull/101), closes
+[#99](https://github.com/toumix/desire/issues/99)) — `session-start.sh` unsets `commit.gpgsign`,
+`user.signingkey`, `gpg.format` and `gpg.ssh.program`, not `commit.gpgsign` alone, and pins
+`gpg.ssh.program` to `ssh-keygen` when signing turns on, overriding the environment's own.
+Amends the entry below, same day.
+
+**Commits are signed** ([#97](https://github.com/toumix/desire/pull/97), closes
+[#96](https://github.com/toumix/desire/issues/96)) — the SessionStart hook turns
+`AGENTS_SIGNING_KEY`, an SSH key registered on AGENT's account as signing-only, into
+`commit.gpgsign`, so commits show Verified; a session without the key commits unsigned.
+Extends the commits-authored-by-AGENT entry of 2026-08-20 below.
+
+## 2026-08-20
+
+**The config lives in `config.env`** ([#94](https://github.com/toumix/desire/pull/94)) — `USER`,
+`AGENT`, `AGENT_EMAIL`, `WORK_REPOS`, `MEMORY_REPO`, `DESIRE_REPO`, `APPROVE_EMOJI`, `REVIEWER`,
+`AGENT_FOOTER` and `ADOPTED_PRS` are set there, one `KEY=value` per line, `CLAUDE.md` imports it
+into every session, and `AGENTS.md`'s Config section points at it rather than naming them.
+`session-start.sh` reads it to set `user.name` and `user.email` globally on every remote session,
+before the first commit of a turn; `sweep.py`'s `config()` parses it. Replaces the Config block
+of `AGENTS.md`.
+
+**Commits are authored by AGENT and AGENT_EMAIL** ([#93](https://github.com/toumix/desire/pull/93),
+closes [#92](https://github.com/toumix/desire/issues/92)) — `AGENT_EMAIL` joins the Config, set with
+`AGENT` on every clone before a turn's first commit. New rule, replaces nothing.
+
+**`RULES.md` lands here** (same PR, closes
+[#91](https://github.com/toumix/desire/issues/91)) — a verbatim copy of discopy's, imported by
+`CLAUDE.md`, until [#87](https://github.com/toumix/desire/issues/87) gives it one home. `sweep.py`
+reads its `TODO.md` off each AGENT-owned head in WORK_REPOS: open boxes as context, a `[WIP]` claim
+past twelve hours and a branch that never carried one as findings; a branch that carried one and
+deleted it at the gate is not a finding. New rule, replaces nothing.
+
+**The sweep reads a body USER wrote** (same PR, closes
+[#90](https://github.com/toumix/desire/issues/90)) — an issue or pull request USER opened is the
+thread while nothing else is said on it, windowed on `created_at`; once anyone comments, that
+thread's last word answers for it. Replaces reporting a body only when it carries a 🚀. Same PR
+stops `answered` raising on a body with no description.
+
 ## 2026-08-19
 
 **REVIEWER is tagged on public repos only** ([#89](https://github.com/toumix/desire/pull/89),
