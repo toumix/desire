@@ -135,9 +135,8 @@ Watch PRs by webhook events only: never schedule timed self check-ins,
 every scheduled fire notifies USER for nothing.
 
 Every AGENT-owned pull request in a public repo tags REVIEWER once its
-`TODO.md` is done and again after a substantial rebuild. REVIEWER is billed per
-private repo, so a pull request in one is never tagged — today that is
-MEMORY_REPO and `rel-int/wiki`.
+`TODO.md` is done and again after a substantial rebuild; a pull request in a
+private repo is never tagged.
 
 Every write to GitHub — pull requests, comments, reviews, reactions — goes
 through the MCP tools, and `GITHUB_TOKEN` is for reads only: the two

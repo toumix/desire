@@ -7,8 +7,7 @@ Entries state the changes, no explanation of why.
 
 **REVIEWER is tagged on public repos only** ([#89](https://github.com/toumix/desire/pull/89),
 closes [#86](https://github.com/toumix/desire/issues/86)) — a pull request in a private repo is
-never tagged, today MEMORY_REPO and `rel-int/wiki`. Narrows the every-PR-tags-REVIEWER entry of
-2026-08-16 below.
+never tagged. Narrows the every-PR-tags-REVIEWER entry of 2026-08-16 below.
 
 ## 2026-08-18
 
