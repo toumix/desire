@@ -25,25 +25,23 @@ import urllib.error
 import urllib.request
 
 CONFIG = pathlib.Path(__file__).parents[3] / "config.env"
-GATE = "GitHub access is not enabled for this session"
+GATE = "is not enabled for this session"
 DIAGNOSIS = """\
-cannot sweep {repo}: this session has no repo-scoped GitHub access. Not clean.
+cannot sweep {repo}: it is not attached to this session. Not clean.
 
-GitHub said: {detail}
+The proxy said: {detail}
 
-The credential is fine — an unscoped call such as /user authenticates as the
-agent. It is the session that is not wired for repo-scoped GitHub: every
-https://api.github.com/repos/... path 403s with the message above, whatever
-the token, and so does `gh api repos/...`. GraphQL is gated too, serving only
-a pinned set of PR-review operations, and its refusal recommends the REST path
-that is itself blocked. This is desire#95.
+The 403 is the agent proxy's, not GitHub's: raw REST reaches exactly the
+repos attached to the session, whatever the token, and 403s on the rest with
+the message above. Attach the repo — `add_repo`, or a session provisioned
+with it — and the sweep runs unchanged. This is desire#95.
 
-Sweep by hand through the `mcp__github__*` tools, which are unaffected:
-`list_issues` and `list_pull_requests` for the open items, `issue_read` and
-`pull_request_read` with `get_comments` for the threads. Reaction *counts* do
-come back, on bodies and on comments alike, so a 🚀 is visible; *who* reacted
-does not, so an approval cannot be attributed. Treat a rocket as a candidate
-and read the thread it sits on.\
+Fallback, in a session whose `mcp__github__*` tools reach the repo anyway:
+sweep by hand — `list_issues` and `list_pull_requests` for the open items,
+`issue_read` and `pull_request_read` with `get_comments` for the threads.
+Reaction *counts* do come back, on bodies and on comments alike, so a 🚀 is
+visible; *who* reacted does not, so an approval cannot be attributed. Treat a
+rocket as a candidate and read the thread it sits on.\
 """
 BOX = re.compile(r"^\s*[-*] \[([^]]*)\]")
 CLAIM = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?"

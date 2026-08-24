@@ -9,3 +9,7 @@ The scheduled prompt, verbatim:
   [desire#95](https://github.com/toumix/desire/issues/95) from scratch a sixth time.
 - [x] Record on desire#95 what this session measured: the gate is now the steady state, reaction
   *counts* are readable over MCP, and GraphQL is gated too.
+- [x] Re-measured 2026-08-24, live session: the proxy message changed to per-repo phrasing
+  ("GitHub access to this repository is not enabled for this session. Use add_repo…"), so the
+  match is loosened to the shared substring and the diagnosis names attaching the repo, not the
+  MCP hand-sweep, as the remedy.
