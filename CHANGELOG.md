@@ -3,6 +3,12 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-08-30
+
+**`rel-int/lambek` joins WORK_REPOS** ([#120](https://github.com/toumix/desire/pull/120), closes
+[#119](https://github.com/toumix/desire/issues/119)) — the routines now scan three repos, not two.
+Nothing else changes.
+
 ## 2026-08-26
 
 **One memory PR per day, written by 🐦 Birdsong alone**
