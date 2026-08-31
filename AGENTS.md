@@ -82,6 +82,9 @@ flag `👀` when anyone but USER has reacted, so a turn can tell a backlog from 
 MEMORY_REPO holds the agents' long-term memory in its `main` branch:
 - `README.md` is the current state of the work
 - `TURNS/<date>.md` are summaries of daily work
+- `USER_TODO.md` is USER's own standing list — what only USER can do, and what else waits on
+  them — rewritten every turn as checkboxes, never appended to
+- `REVIEWS/<person>.md` are one standing note per collaborator, rewritten when re-read
 
 A turn that stays within one workstream records itself on its dedicated work PR
 and leaves MEMORY_REPO untouched. Only changes that affect other PRs land there.

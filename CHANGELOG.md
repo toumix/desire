@@ -5,12 +5,12 @@ Entries state the changes, no explanation of why.
 
 ## 2026-08-31
 
-**The memory PR template drops "Waiting on you", gains "What agents did today"**
+**The memory PR template drops "Waiting on you", gains "Since last time"**
 ([#127](https://github.com/toumix/desire/pull/127), closes
-[#126](https://github.com/toumix/desire/issues/126)) — `USER_TODO.md` is now the standing place
-for what waits on USER, so the template's own copy of it is retired. Replaced by a summary split
-by source (interactive work under USER's own prompts vs. Evening's autonomous round), required to
-say plainly when a round did nothing or didn't run. `What changed today` is folded into it.
+[#126](https://github.com/toumix/desire/issues/126)) — replaced by a summary of activity since the
+previous memory PR, split by source (interactive work under USER's own prompts vs. Evening's
+autonomous round), required to say plainly when a round did nothing or didn't run. `What changed
+today` is folded into it. The `Memory` section gains `USER_TODO.md` and `REVIEWS/<person>.md`.
 
 ## 2026-08-26
 
