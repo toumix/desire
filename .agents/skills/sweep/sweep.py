@@ -8,10 +8,10 @@ when the pipeline has reacted
 to say it received it. config.env is the ground truth for USER, the repos
 and the emoji; AGENTS.md's rules say what to do with a finding.
 
-Usage: sweep.py [--since <ISO8601 UTC, e.g. 2026-08-18T00:00:00Z>] <owner/repo>
-                [number...]
+Usage: sweep.py [--since <ISO8601>] [--until <ISO8601>] <owner/repo> [number...]
        # no numbers: every open PR and issue; --since windows the closes
-       # and quiets a question the pipeline already 👀'd
+       # and quiets a question the pipeline already 👀'd; --until bounds
+       # memory receipt evidence for an executive-summary interval
 Exit 0 and "clean" on a clean sweep, exit 1 with one line per finding. Open
 `TODO.md` boxes are printed as context and do not make the sweep dirty.
 Exit 2 when GitHub access prevents the sweep: that is neither clean nor a finding.
@@ -82,6 +82,14 @@ def config(path):
     return setup
 
 
+def instant(value):
+    """One ISO-8601 instant normalized to UTC for reliable comparisons."""
+    parsed = datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError(f"timestamp needs an offset: {value}")
+    return parsed.astimezone(datetime.timezone.utc)
+
+
 def get(repo, path):
     """A GitHub REST resource, every page of a listing. A page holds 100 and
     `discopy/discopy` had 153 open items the day this stopped reading one page:
@@ -136,13 +144,14 @@ def reactors(repo, kind, target, emoji, cache):
     return [reaction for reaction in cache[kind] if reaction["content"] == emoji]
 
 
-def closed_since(repo, since):
+def closed_since(repo, since, until=""):
     """The issues closed inside the window, with why and by whom. USER answers
     some questions by closing the issue, which leaves no thread to read and no
     open item to walk. One listing per repo, which carries the closer as well
     as the reason; without a window there is no delta, hence nothing."""
     for issue in get(repo, f"issues?state=closed&since={since}") if since else []:
-        if "pull_request" in issue or issue["closed_at"] < since:
+        if ("pull_request" in issue or instant(issue["closed_at"]) < instant(since)
+                or (until and instant(issue["closed_at"]) > instant(until))):
             continue
         closer = issue.get("closed_by") or {}
         reason = f" {issue['state_reason']}" if issue["state_reason"] else ""
@@ -243,13 +252,15 @@ def valid_receipt(body, day, routine, run_id):
                for field in RECEIPT_FIELDS)
 
 
-def routine_receipts(repo, pulls):
+def routine_receipts(repo, pulls, until=""):
     """Canonical receipt markers found in the inventoried memory PR comments.
     The comment is edited in place as a run progresses, so a marker appearing
     in two comments is a duplicate rather than a second lifecycle event."""
     receipts = {}
     for pull in pulls:
         for comment in get(repo, f"issues/{pull['number']}/comments"):
+            if until and instant(comment["updated_at"]) > instant(until):
+                continue
             body = comment.get("body") or ""
             for day, routine, run_id in RECEIPT.findall(body):
                 values = receipt_values(body)
@@ -267,7 +278,7 @@ def routine_receipts(repo, pulls):
     return receipts
 
 
-def memory(repo, since):
+def memory(repo, since, until=""):
     """MEMORY_REPO holds one open PR per day, checked whatever the window since
     it is an invariant rather than a delta. Several open at once is USER not
     having merged the past days, which is theirs and no finding of ours; two
@@ -276,9 +287,9 @@ def memory(repo, since):
     without the sweep calling it dirty."""
     pulls = get(repo, "pulls?state=all&sort=updated&direction=desc")
     open_prs = [pull for pull in pulls if pull["state"] == "open"]
-    recent = [pull for pull in pulls
-              if since and pull["state"] != "open" and pull["updated_at"] >= since]
-    receipts = routine_receipts(repo, open_prs + recent)
+    recent = [pull for pull in pulls if pull["state"] != "open" and (
+        not since or instant(pull["updated_at"]) >= instant(since))]
+    receipts = routine_receipts(repo, open_prs + recent, until)
     receipt_lines = []
     for (day, routine, run_id), copies in sorted(receipts.items()):
         latest = max(copies, key=lambda receipt: receipt["updated_at"])
@@ -289,7 +300,8 @@ def memory(repo, since):
             f"on #{latest['pull']}: {latest['url']}")
     print(f"{repo}: {len(open_prs)} open PR(s)"
           + "".join("\n  " + pull_line(pull) for pull in open_prs)
-          + ("\nupdated since last sweep:"
+          + (("\nclosed/merged history:" if not since else
+              "\nupdated since lower bound:")
              + "".join("\n  " + pull_line(pull) for pull in recent)
              if recent else "")
           + "".join(receipt_lines),
@@ -533,17 +545,17 @@ def item(repo, number, setup, since, cache):
     return findings + todo(repo, number, body, setup, cache)
 
 
-def sweep(repo, numbers, since, setup):
+def sweep(repo, numbers, since, setup, until=""):
     """One line per finding, empty when the sweep is clean."""
     cache, findings = {}, []
     if repo == setup["MEMORY_REPO"] and not numbers:
-        findings += memory(repo, since)
+        findings += memory(repo, since, until)
     if repo in setup["WORK_REPOS"] and not numbers:
         state = work_state(repo, setup, cache)
         print(state, file=sys.stderr)
         findings += board_state(repo, setup, state.splitlines()[0])
     if not numbers:
-        findings += closed_since(repo, since)
+        findings += closed_since(repo, since, until)
         numbers = sorted({
             issue["number"] for issue in get(repo, "issues?state=open")})
     for number in numbers:
@@ -553,11 +565,16 @@ def sweep(repo, numbers, since, setup):
 
 def main(arguments):
     since = ""  # ISO 8601 UTC sorts lexicographically, so "" is the epoch
-    if arguments and arguments[0] == "--since":
-        _, since, *arguments = arguments
+    until = ""
+    while arguments and arguments[0] in ("--since", "--until"):
+        option, value, *arguments = arguments
+        if option == "--since":
+            since = value
+        else:
+            until = value
     try:
         findings = sweep(arguments[0], [int(n) for n in arguments[1:]], since,
-                         config(CONFIG))
+                         config(CONFIG), until)
     except NoAccess as error:
         print(f"cannot sweep {arguments[0]}: GitHub access unavailable; not clean\n{error}",
               file=sys.stderr)
@@ -569,6 +586,9 @@ def main(arguments):
     except urllib.error.URLError as error:
         print(f"cannot sweep {arguments[0]}: GitHub transport failed: {error.reason}; not clean",
               file=sys.stderr)
+        return 2
+    except ValueError as error:
+        print(f"cannot sweep {arguments[0]}: {error}; not clean", file=sys.stderr)
         return 2
     print("\n".join(findings) if findings else "clean", file=sys.stderr)
     return 1 if findings else 0

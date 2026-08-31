@@ -150,16 +150,16 @@ Routine: <Evening|Birdsong>
 Date: <YYYY-MM-DD>
 Run-ID: <scheduler invocation ID|generated UUID>
 Trigger: <scheduled|manual|unknown>
-Scheduled: <ISO 8601 time|unknown>
-Started: <ISO 8601 time>
-Finished: <pending|ISO 8601 time>
+Scheduled: <YYYY-MM-DDTHH:MM:SSZ|unknown>
+Started: <YYYY-MM-DDTHH:MM:SSZ>
+Finished: <pending|YYYY-MM-DDTHH:MM:SSZ>
 Status: <started|ran|idle|failed>
 Eligible: <pending|count and links|none|unknown>
 Selected: <pending|count and links|none|unknown>
 Completed: <pending|count and terminal outcomes|none|unknown>
 Support: <pending|scans, rebases, review triggers and bookkeeping|none|unknown>
 Blockers: <pending|named blockers and links|none|unknown>
-Covered-through: <pending|ISO 8601 time|not applicable|unknown>
+Covered-through: <pending|YYYY-MM-DDTHH:MM:SSZ|not applicable|unknown>
 Turn: <pending|link|none>
 ```
 
@@ -179,11 +179,12 @@ Before Birdsong derives a summary, it reads MEMORY_REPO `main`, every open memor
 memory PR updated since the previous summary: their comments, commits and head versions of
 `TURNS/`. For the MEMORY_REPO sweep it passes `Covered-through` from the most recent `ran`
 Birdsong receipt, never `Finished` or a later generic sweep time; when no valid cutoff exists it
-omits `--since` for a full sweep. Birdsong captures the new cutoff immediately before its first
-interval read and never advances it to the later publication or finish time, so concurrent events
-fall into the next interval rather than a gap. The same path on different heads is distinct
-evidence. It then verifies claims against the live WORK_REPOS inventory, comments, reviews and
-check runs. The previous board and
+omits `--since` for a full sweep. Birdsong captures the new UTC cutoff immediately before its first
+interval read, passes it as `--until`, and never advances it to publication or finish time. The
+activity summary includes only events with timestamps after the previous cutoff and at or before
+the new one; later events may affect live state but stay out of this activity interval. The same
+path on different heads is distinct evidence. It then verifies claims against the live WORK_REPOS
+inventory, comments, reviews and check runs. The previous board and
 summary are indexes to claims, never evidence for them; this live-evidence rule controls anywhere
 another memory instruction calls the board a source. If a required read fails, the summary is
 partial and the affected fact is `unknown`; stale prose never substitutes for a failed query.

@@ -6,8 +6,9 @@
 - it reuses the day's memory PR when an earlier routine opened it, otherwise opens it itself
 - it builds the interval's event trace from every relevant memory PR head, commit and comment before
   reading the board, using the most recent valid `Covered-through` rather than a finish or later
-  sweep time as its cursor; it captures the new cutoff before the first read so concurrent events
-  stay in the next interval. Previous board or summary prose is never a factual source
+  sweep time as its cursor; it captures the new UTC cutoff before the first read and attributes
+  only events inside that bounded interval, leaving later events to the next one. Previous board or
+  summary prose is never a factual source
 - it scans WORK_REPOS live and reconciles the complete AGENT-owned PR inventory, default-branch SHA,
   TODO state, comments, reviews and expected check runs against that event trace; after rewriting
   the board it reruns each sweep until the board's machine-readable work-state marker agrees

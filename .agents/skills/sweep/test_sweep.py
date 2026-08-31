@@ -135,6 +135,85 @@ class SweepEvidenceTest(unittest.TestCase):
         self.assertNotIn("#2 closed", output.getvalue())
 
     @patch("sweep.get")
+    def test_full_memory_sweep_includes_closed_receipts(self, get):
+        pull = {
+            "number": 3,
+            "state": "closed",
+            "updated_at": "2026-08-30T08:00:00Z",
+            "merged_at": "2026-08-30T08:00:00Z",
+            "title": "2026-08-30",
+            "html_url": "https://example.test/pull/3",
+            "head": {"ref": "head-3", "sha": "sha-3"},
+        }
+        comment = {
+            "body": receipt("2026-08-30", "birdsong", "ran"),
+            "html_url": "https://example.test/pull/3#comment-1",
+            "updated_at": "2026-08-30T07:00:00Z",
+        }
+        get.side_effect = lambda _, path: (
+            [pull] if path == "pulls?state=all&sort=updated&direction=desc"
+            else [comment])
+        output = io.StringIO()
+
+        with contextlib.redirect_stderr(output):
+            findings = sweep.memory("o/memory", "")
+
+        self.assertEqual(findings, [])
+        self.assertIn("#3 merged", output.getvalue())
+        self.assertIn("2026-08-30 birdsong run=run-1", output.getvalue())
+
+    @patch("sweep.get")
+    def test_memory_lower_bound_normalizes_iso_offsets(self, get):
+        pull = {
+            "number": 3,
+            "state": "closed",
+            "updated_at": "2026-08-31T03:30:00Z",
+            "merged_at": "2026-08-31T03:30:00Z",
+            "title": "2026-08-31",
+            "html_url": "https://example.test/pull/3",
+            "head": {"ref": "head-3", "sha": "sha-3"},
+        }
+        get.side_effect = lambda _, path: (
+            [pull] if path == "pulls?state=all&sort=updated&direction=desc"
+            else [])
+        output = io.StringIO()
+
+        with contextlib.redirect_stderr(output):
+            findings = sweep.memory(
+                "o/memory", "2026-08-31T05:00:00+02:00")
+
+        self.assertEqual(findings, [])
+        self.assertIn("#3 merged", output.getvalue())
+
+    @patch("sweep.get")
+    def test_memory_receipts_respect_upper_cutoff(self, get):
+        pull = {
+            "number": 4,
+            "state": "open",
+            "updated_at": "2026-08-31T04:00:00Z",
+            "merged_at": None,
+            "title": "2026-08-31",
+            "html_url": "https://example.test/pull/4",
+            "head": {"ref": "head-4", "sha": "sha-4"},
+        }
+        comment = {
+            "body": receipt("2026-08-31", "evening", "ran"),
+            "html_url": "https://example.test/pull/4#comment-1",
+            "updated_at": "2026-08-31T04:00:00Z",
+        }
+        get.side_effect = lambda _, path: (
+            [pull] if path == "pulls?state=all&sort=updated&direction=desc"
+            else [comment])
+        output = io.StringIO()
+
+        with contextlib.redirect_stderr(output):
+            findings = sweep.memory(
+                "o/memory", "", "2026-08-31T03:00:00Z")
+
+        self.assertEqual(findings, [])
+        self.assertNotIn("receipt 2026-08-31", output.getvalue())
+
+    @patch("sweep.get")
     def test_memory_inventory_prints_one_line_for_a_unique_receipt(self, get):
         pull = {
             "number": 4,
