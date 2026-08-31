@@ -5,6 +5,15 @@ Entries state the changes, no explanation of why.
 
 ## 2026-08-31
 
+**Scheduled routines gain run evidence, bounded summaries and finish-first execution**
+([#129](https://github.com/toumix/desire/pull/129), closes
+[#128](https://github.com/toumix/desire/issues/128) and
+[#124](https://github.com/toumix/desire/issues/124)) — `config.env` gains routine weekdays and
+timezone. `AGENTS.md` gains run-scoped start/terminal receipts, bounded summary intervals and
+live board markers. `EVENING.md` replaces queue-wide work with one primary terminal handoff.
+`BIRDSONG.md` separates activity sources and verifies live state. `sweep.py` validates receipts
+and board markers, uses default branches, and exits 2 on incomplete GitHub access.
+
 **The memory PR template drops "Waiting on you", gains "Since last time"**
 ([#127](https://github.com/toumix/desire/pull/127), closes
 [#126](https://github.com/toumix/desire/issues/126)) — replaced by a summary of activity since the
