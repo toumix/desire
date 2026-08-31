@@ -82,6 +82,9 @@ flag `👀` when anyone but USER has reacted, so a turn can tell a backlog from 
 MEMORY_REPO holds the agents' long-term memory in its `main` branch:
 - `README.md` is the current state of the work
 - `TURNS/<date>.md` are summaries of daily work
+- `USER_TODO.md` is USER's own standing list — what only USER can do, and what else waits on
+  them — rewritten every turn as checkboxes, never appended to
+- `REVIEWS/<person>.md` is one standing note per collaborator, rewritten when re-read
 
 A turn that stays within one workstream records itself on its dedicated work PR
 and leaves MEMORY_REPO untouched. Only changes that affect other PRs land there.
@@ -108,20 +111,28 @@ In MEMORY_REPO the day's PR branch wins over the assigned one.
 
 ```
 # <date>
-## 🚀 Waiting on you       always first, nothing above it. One bullet per decision:
-                           name the thing, the question in one line, the options,
-                           what answering unblocks. "nothing" if empty.
+## Since last time         high-level summary of activity since the *previous memory PR*, not
+                           literally "today" — a PR opened at 8am has nothing to say about today's
+                           calendar date and everything to say about the days since the last one.
+                           Split by source: interactive work under your own prompts, and Evening's
+                           autonomous round — say plainly when a round did nothing, or didn't run
+                           at all, rather than omit it. Substance, not just PR numbers: what a
+                           head actually does, not just that it exists (that's the queue's job).
 ## Ready for your review   which heads are ready and what reading them costs,
                            linking the board's table rather than repeating it.
-## What changed today      merged / arrived / fixed, one line each.
 ## Agent proposals         ideas wanting a yes or no but blocking nothing, 🚀-able.
 ## Detail                  links to the board and the turn file, nothing else.
 ```
 
+**"🚀 Waiting on you" is retired** (USER, 2026-08-31): `USER_TODO.md` is the standing list of what
+waits on you, kept current every turn, so a PR-description copy of it was a second place for the
+same thing to go stale. What replaces it is an honest activity report — the question "did Evening
+even launch" should be answerable from the description alone, not require reading commit history.
+
 The board is where a table lives: repeating it here is what goes stale first.
-No agent narration in the description — "the sweep is clean", "re-merged the
-queue" are turn-file material; a proposal is a bullet under `Agent proposals`,
-never buried mid-paragraph.
+No agent narration in the description beyond that activity summary — "the sweep is clean",
+"re-merged the queue" are turn-file material unless they belong in the summary itself; a proposal
+is a bullet under `Agent proposals`, never buried mid-paragraph.
 
 A turn that opens or reports a PR states its review cost — lines changing
 existing code, lines in new files, core modules touched: churn is a proxy for

@@ -3,6 +3,15 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-08-31
+
+**The memory PR template drops "Waiting on you", gains "Since last time"**
+([#127](https://github.com/toumix/desire/pull/127), closes
+[#126](https://github.com/toumix/desire/issues/126)) — replaced by a summary of activity since the
+previous memory PR, split by source (interactive work under USER's own prompts vs. Evening's
+autonomous round), required to say plainly when a round did nothing or didn't run. `What changed
+today` is folded into it. The `Memory` section gains `USER_TODO.md` and `REVIEWS/<person>.md`.
+
 ## 2026-08-26
 
 **One memory PR per day, written by 🐦 Birdsong alone**
