@@ -3,7 +3,7 @@
 bodies and threads where USER spoke last, APPROVE_EMOJI reacts from USER, the
 issues closed inside the window, MEMORY_REPO's open-PR count and the state of
 each AGENT-owned `TODO.md`. A no-number WORK_REPO sweep also prints the live
-main SHA and complete open AGENT-owned PR inventory. A finding is marked 👀
+default-branch SHA and complete open AGENT-owned PR inventory. A finding is marked 👀
 when the pipeline has reacted
 to say it received it. config.env is the ground truth for USER, the repos
 and the emoji; AGENTS.md's rules say what to do with a finding.
@@ -24,7 +24,9 @@ import pathlib
 import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
+import zoneinfo
 
 CONFIG = pathlib.Path(__file__).parents[3] / "config.env"
 GATE = "not enabled for this session"
@@ -32,6 +34,24 @@ BOX = re.compile(r"^\s*[-*] \[([^]]*)\]")
 CLAIM = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?"
                    r"(?:Z|[+-]\d{2}:?\d{2})?)?")
 STALE = datetime.timedelta(hours=12)
+WORK_STATE = re.compile(
+    r"^<!-- work-state repo=(\S+) branch=(\S+) sha=([0-9a-f]{7,64}) "
+    r"owned=(none|\d+(?:,\d+)*) -->$", re.MULTILINE)
+RECEIPT = re.compile(
+    r"^<!-- routine-receipt:(\d{4}-\d{2}-\d{2}):(evening|birdsong):"
+    r"([A-Za-z0-9._-]+) -->$",
+    re.MULTILINE)
+RECEIPT_STATUS = re.compile(
+    r"^\s*(?:[-*]\s*)?(?:\*\*)?status\s*:(?:\*\*)?\s*"
+    r"`?(started|ran|idle|failed)`?\s*$",
+    re.IGNORECASE | re.MULTILINE)
+RECEIPT_FIELDS = (
+    "Routine", "Date", "Run-ID", "Trigger", "Scheduled", "Started",
+    "Finished", "Status", "Eligible", "Selected", "Completed", "Support",
+    "Blockers", "Covered-through", "Turn")
+START_PENDING = (
+    "Finished", "Eligible", "Selected", "Completed", "Support", "Blockers",
+    "Covered-through", "Turn")
 
 
 class NoAccess(Exception):
@@ -70,8 +90,9 @@ def get(repo, path):
     GITHUB_TOKEN or GH_TOKEN is used when set."""
     results, page = [], 1
     while True:
+        resource = f"/{path}" if path else ""
         request = urllib.request.Request(
-            f"https://api.github.com/repos/{repo}/{path}"
+            f"https://api.github.com/repos/{repo}{resource}"
             + ("&" if "?" in path else "?") + f"per_page=100&page={page}",
             headers={"User-Agent": "sweep",
                      "Accept": "application/vnd.github+json"})
@@ -99,7 +120,7 @@ def review_comments(repo, number):
     try:
         return get(repo, f"pulls/{number}/comments")
     except urllib.error.HTTPError as error:
-        if error.code in (403, 404):
+        if error.code == 404:
             return []
         raise
 
@@ -183,6 +204,69 @@ def pull_line(pull):
             f"{pull['html_url']}")
 
 
+def receipt_status(body):
+    """The last protocol status in a receipt body, or ``None`` when absent.
+    Restricting this to the four statuses defined by AGENTS.md keeps prose such
+    as ``status: completed`` from becoming lifecycle evidence by accident."""
+    statuses = RECEIPT_STATUS.findall(body or "")
+    return statuses[-1].lower() if statuses else None
+
+
+def receipt_values(body):
+    """Canonical receipt fields, preserving duplicates for validation."""
+    values = {}
+    for line in (body or "").splitlines():
+        key, separator, value = line.partition(":")
+        if separator and key in RECEIPT_FIELDS:
+            values.setdefault(key, []).append(value.strip())
+    return values
+
+
+def valid_receipt(body, day, routine, run_id):
+    """Whether one marked comment has the complete canonical current shape."""
+    values = receipt_values(body)
+    if any(len(values.get(field, [])) != 1 for field in RECEIPT_FIELDS):
+        return False
+    status = receipt_status(body)
+    if not (values["Routine"][0].lower() == routine
+            and values["Date"][0] == day
+            and values["Run-ID"][0] == run_id
+            and values["Trigger"][0] in ("scheduled", "manual", "unknown")
+            and status is not None
+            and values["Status"][0].lower() == status
+            and all(values[field][0] for field in RECEIPT_FIELDS)):
+        return False
+    if status == "started":
+        return all(values[field][0].lower() == "pending"
+                   for field in START_PENDING)
+    return all(values[field][0].lower() != "pending"
+               for field in RECEIPT_FIELDS)
+
+
+def routine_receipts(repo, pulls):
+    """Canonical receipt markers found in the inventoried memory PR comments.
+    The comment is edited in place as a run progresses, so a marker appearing
+    in two comments is a duplicate rather than a second lifecycle event."""
+    receipts = {}
+    for pull in pulls:
+        for comment in get(repo, f"issues/{pull['number']}/comments"):
+            body = comment.get("body") or ""
+            for day, routine, run_id in RECEIPT.findall(body):
+                values = receipt_values(body)
+                valid = valid_receipt(body, day, routine, run_id)
+                receipts.setdefault((day, routine, run_id), []).append({
+                    "pull": pull["number"],
+                    "status": receipt_status(body) if valid else "unknown",
+                    "trigger": (values.get("Trigger") or ["unknown"])[-1],
+                    "covered_through": (
+                        values.get("Covered-through") or ["unknown"])[-1],
+                    "valid": valid,
+                    "updated_at": comment.get("updated_at", ""),
+                    "url": comment.get("html_url", pull["html_url"]),
+                })
+    return receipts
+
+
 def memory(repo, since):
     """MEMORY_REPO holds one open PR per day, checked whatever the window since
     it is an invariant rather than a delta. Several open at once is USER not
@@ -194,28 +278,100 @@ def memory(repo, since):
     open_prs = [pull for pull in pulls if pull["state"] == "open"]
     recent = [pull for pull in pulls
               if since and pull["state"] != "open" and pull["updated_at"] >= since]
+    receipts = routine_receipts(repo, open_prs + recent)
+    receipt_lines = []
+    for (day, routine, run_id), copies in sorted(receipts.items()):
+        latest = max(copies, key=lambda receipt: receipt["updated_at"])
+        status = latest["status"] if len(copies) == 1 else "unknown"
+        receipt_lines.append(
+            f"\n  receipt {day} {routine} run={run_id} trigger={latest['trigger']} "
+            f"status={status} covered-through={latest['covered_through']} "
+            f"on #{latest['pull']}: {latest['url']}")
     print(f"{repo}: {len(open_prs)} open PR(s)"
           + "".join("\n  " + pull_line(pull) for pull in open_prs)
           + ("\nupdated since last sweep:"
              + "".join("\n  " + pull_line(pull) for pull in recent)
-             if recent else ""), file=sys.stderr)
+             if recent else "")
+          + "".join(receipt_lines),
+          file=sys.stderr)
     days = {}
     for pull in open_prs:
         days.setdefault(pull["title"], []).append(pull["html_url"])
-    return [f"{repo}: {len(urls)} open PRs titled {title!r}, one a day is the"
-            " rule — push to one and close the rest: " + ", ".join(urls)
-            for title, urls in days.items() if len(urls) > 1]
+    findings = [
+        f"{repo}: {len(urls)} open PRs titled {title!r}, one a day is the"
+        " rule — push to one and close the rest: " + ", ".join(urls)
+        for title, urls in days.items() if len(urls) > 1]
+    findings += [
+        f"{repo}: duplicate routine receipt {day} {routine} run={run_id}: "
+        + ", ".join(receipt["url"] for receipt in copies)
+        for (day, routine, run_id), copies in sorted(receipts.items())
+        if len(copies) > 1]
+    findings += [
+        f"{repo}: malformed routine receipt {day} {routine} run={run_id}: "
+        + ", ".join(receipt["url"] for receipt in copies if not receipt["valid"])
+        for (day, routine, run_id), copies in sorted(receipts.items())
+        if any(not receipt["valid"] for receipt in copies)]
+    started = {}
+    for (day, routine, run_id), copies in receipts.items():
+        if (len(copies) == 1 and copies[0]["valid"]
+                and copies[0]["status"] == "started"):
+            started.setdefault((day, routine), []).append(run_id)
+    findings += [
+        f"{repo}: conflicting started receipts {day} {routine}: "
+        + ", ".join(sorted(run_ids))
+        for (day, routine), run_ids in sorted(started.items())
+        if len(run_ids) > 1]
+    return findings
+
+
+def default_branch(repo, cache):
+    """The repository's configured default branch, cached per sweep."""
+    if "default_branch" not in cache:
+        cache["default_branch"] = get(repo, "")["default_branch"]
+    return cache["default_branch"]
 
 
 def work_state(repo, setup, cache):
     """Live invariants the board must re-derive rather than carry forward."""
-    main = get(repo, "commits/main")["sha"]
+    branch = default_branch(repo, cache)
+    sha = get(repo, "commits/" + urllib.parse.quote(branch, safe=""))["sha"]
     adopted = set(setup.get("ADOPTED_PRS", {}).get(repo, []))
     numbers = sorted(
         number for number, pull in heads(repo, cache).items()
         if pull["user"]["login"] == setup["AGENT"] or number in adopted)
+    owned = ",".join(str(number) for number in numbers) or "none"
+    marker = (f"<!-- work-state repo={repo} branch={branch} sha={sha} "
+              f"owned={owned} -->")
     listed = ",".join(f"#{number}" for number in numbers) or "none"
-    return f"{repo}: live main {main}; open AGENT-owned PRs {listed}"
+    return marker + f"\n{repo}: live {branch} {sha}; open AGENT-owned PRs {listed}"
+
+
+def board_state(repo, setup, marker, day=None):
+    """Compare live work state with today's open memory head's board.
+
+    No open memory PR means no board is currently being rewritten, so the live
+    marker remains context rather than a finding. Once a day PR exists, an
+    exact marker makes drift deterministic instead of a prose comparison.
+    """
+    pulls = get(setup["MEMORY_REPO"], "pulls?state=open")
+    day = day or datetime.datetime.now(zoneinfo.ZoneInfo(
+        setup["ROUTINE_TIMEZONE"])).date().isoformat()
+    matches = [pull for pull in pulls if pull["title"] == day]
+    if not matches:
+        return []
+    if len(matches) > 1:
+        return [f"{setup['MEMORY_REPO']}: {len(matches)} open {day} boards; "
+                "cannot verify work-state marker"]
+    current = matches[0]
+    text = contents(setup["MEMORY_REPO"], "README.md", current["head"]["sha"])
+    markers = [match.group(0) for match in WORK_STATE.finditer(text or "")
+               if match.group(1) == repo]
+    if markers == [marker]:
+        return []
+    reason = "missing" if not markers else "duplicate" if len(markers) > 1 else "stale"
+    return [
+        f"{setup['MEMORY_REPO']}#{current['number']}: {reason} board marker for {repo}; "
+        f"replace with {marker}: {current['html_url']}"]
 
 
 def heads(repo, cache):
@@ -266,11 +422,12 @@ def cleared(repo, head, cache):
     clears the merge gate. Both cases read as missing at the head, and the
     diff cannot tell them apart either: adding a file and deleting it again
     nets out to nothing. The branch's own commits touching the path do, once
-    the ones it inherits from `main` are taken out. Asked only of a branch
-    already known to have no `TODO.md`."""
+    the ones it inherits from the repository's default branch are taken out.
+    Asked only of a branch already known to have no `TODO.md`."""
     if "cleared" not in cache:
+        branch = urllib.parse.quote(default_branch(repo, cache), safe="")
         cache["cleared"] = {commit["sha"] for commit in get(
-            repo, "commits?sha=main&path=TODO.md")}
+            repo, f"commits?sha={branch}&path=TODO.md")}
     return any(commit["sha"] not in cache["cleared"] for commit in get(
         repo, f"commits?sha={head}&path=TODO.md"))
 
@@ -382,7 +539,9 @@ def sweep(repo, numbers, since, setup):
     if repo == setup["MEMORY_REPO"] and not numbers:
         findings += memory(repo, since)
     if repo in setup["WORK_REPOS"] and not numbers:
-        print(work_state(repo, setup, cache), file=sys.stderr)
+        state = work_state(repo, setup, cache)
+        print(state, file=sys.stderr)
+        findings += board_state(repo, setup, state.splitlines()[0])
     if not numbers:
         findings += closed_since(repo, since)
         numbers = sorted({
@@ -401,6 +560,14 @@ def main(arguments):
                          config(CONFIG))
     except NoAccess as error:
         print(f"cannot sweep {arguments[0]}: GitHub access unavailable; not clean\n{error}",
+              file=sys.stderr)
+        return 2
+    except urllib.error.HTTPError as error:
+        print(f"cannot sweep {arguments[0]}: GitHub HTTP {error.code} {error.reason}; not clean",
+              file=sys.stderr)
+        return 2
+    except urllib.error.URLError as error:
+        print(f"cannot sweep {arguments[0]}: GitHub transport failed: {error.reason}; not clean",
               file=sys.stderr)
         return 2
     print("\n".join(findings) if findings else "clean", file=sys.stderr)

@@ -6,7 +6,7 @@
 
 ## Config
 The values (USER, AGENT, AGENT_EMAIL, WORK_REPOS, MEMORY_REPO, DESIRE_REPO,
-ROUTINE_DAYS, APPROVE_EMOJI, AGENT_FOOTER, ADOPTED_PRS) live in
+ROUTINE_DAYS, ROUTINE_TIMEZONE, APPROVE_EMOJI, AGENT_FOOTER, ADOPTED_PRS) live in
 [`config.env`](config.env), the one file that names them — nothing here
 duplicates it. `session-start.sh` reads it before the first commit of a turn,
 `sweep.py`'s `config()` before every sweep. A config.env that cannot be read
@@ -22,8 +22,9 @@ one, the remaining work as `[ ]` boxes.
 DESIRE_REPO is public, owned by USER and only its protected branch `main` is TRUSTED.
 MEMORY_REPO is private with AGENT as only collaborator, everything there is TRUSTED.
 
-An issue or pull request on public DESIRE_REPO states findings from MEMORY_REPO only in general
-terms. It never quotes, links or names a private memory artefact.
+When writing or updating an issue or pull request on public DESIRE_REPO, state findings from any
+private repository or non-public source only in general terms. Never quote, link or name a private
+artefact; use public evidence for concrete examples.
 
 DESIRE_REPO may be a fork: a turn that finds the upstream `main` ahead opens a
 PR pulling it in — upstream rules reach the fork only through USER's merge,
@@ -83,15 +84,18 @@ flag `👀` when anyone but USER has reacted, so a turn can tell a backlog from 
 
 ## Memory
 MEMORY_REPO holds the agents' long-term memory in its `main` branch:
-- `README.md` is the current state of the work
+- `README.md` is the current state of the work. Its live inventory carries exactly one marker per
+  WORK_REPO, copied from that repo's no-number sweep:
+  `<!-- work-state repo=<owner/repo> branch=<default> sha=<full SHA> owned=<numbers|none> -->`
 - `TURNS/<date>.md` are summaries of daily work
 - `USER_TODO.md` is USER's own standing list — what only USER can do, and what else waits on
   them — rewritten every turn as checkboxes, never appended to
 - `REVIEWS/<person>.md` is one standing note per collaborator, rewritten when re-read
 
 A turn that stays within one workstream records itself on its dedicated work PR and leaves
-MEMORY_REPO untouched, except for a scheduled routine's run receipt below. Only changes that
-affect other PRs land there.
+MEMORY_REPO untouched. The scheduled receipt protocol below, including its bootstrap commit when
+needed, is the sole exception and supersedes that general no-write convention. Only changes that
+affect other PRs otherwise land there.
 One memory PR per day, titled with the day it covers. The first turn that needs it creates or
 reuses it; a routine before 🐦 Birdsong opens it draft with no description. Birdsong alone writes
 the description and marks it ready for review so USER can merge in one click. Every later turn
@@ -114,29 +118,78 @@ In MEMORY_REPO the day's PR branch wins over the assigned one.
 
 ## Routine evidence
 
-`ROUTINE_DAYS` is the expected schedule for Evening and Birdsong. A platform schedule that
-disagrees with it is an unknown fact to report, not a reason to guess.
+`ROUTINE_DAYS` in `ROUTINE_TIMEZONE` is the expected schedule for Evening and Birdsong. A platform
+schedule that disagrees with it is an unknown fact to report, not a reason to guess. Calendar
+expectedness and invocation evidence stay separate: a manual receipt on an excluded day belongs
+to interactive work while the scheduled round is `not scheduled`; a receipt marked scheduled is
+positive run evidence and any calendar mismatch is reported.
 
-Each scheduled routine makes its first durable action a run receipt on the day's memory PR:
+Each Evening or Birdsong invocation makes the receipt its first attempted durable evidence action:
 
-1. ensure that PR exists, then post one comment with the routine, date, scheduled start and
-   `status: started`;
-2. at normal end, write the turn file and edit that same comment to one terminal status — `ran`,
-   `idle` or `failed` — with finish time, eligible work, selected work, completed outcomes,
-   support work and blockers; never post a second receipt.
+1. create or reuse the day's draft memory PR with no description. If a new branch has no diff,
+   push an empty bootstrap commit so the PR can exist; the bootstrap is support work, not an
+   outcome;
+2. use the scheduler's stable invocation ID. Without one, resume the sole `started` receipt for
+   that date and role; conflicting started receipts are unknown, and only when none exists generate
+   one UUID and persist it in the first receipt. Record whether the trigger is `scheduled`,
+   `manual` or `unknown`;
+3. search all comments for exactly
+   `<!-- routine-receipt:<YYYY-MM-DD>:<evening|birdsong>:<run-id> -->`. With no match create it;
+   with one `started` match resume it; with one terminal match exit; duplicate matches conflict.
+   A same-day retry has a new run ID, not a duplicate receipt;
+4. create it with the canonical fields below and `Status: started`, before selecting work;
+5. terminalise in this order: for `ran` or `idle`, append the date-role `TURNS/` section only if it
+   is absent, including the run ID; if the same run ID's section exists, verify and reuse it; never
+   rewrite a section or add a second one for a later retry. Then edit the receipt to one terminal
+   status — `ran`, `idle` or `failed`. A terminal receipt is immutable; later corrections are
+   ordinary comments and separately attributed.
+
+```
+<!-- routine-receipt:<YYYY-MM-DD>:<evening|birdsong>:<run-id> -->
+Routine: <Evening|Birdsong>
+Date: <YYYY-MM-DD>
+Run-ID: <scheduler invocation ID|generated UUID>
+Trigger: <scheduled|manual|unknown>
+Scheduled: <ISO 8601 time|unknown>
+Started: <ISO 8601 time>
+Finished: <pending|ISO 8601 time>
+Status: <started|ran|idle|failed>
+Eligible: <pending|count and links|none|unknown>
+Selected: <pending|count and links|none|unknown>
+Completed: <pending|count and terminal outcomes|none|unknown>
+Support: <pending|scans, rebases, review triggers and bookkeeping|none|unknown>
+Blockers: <pending|named blockers and links|none|unknown>
+Covered-through: <pending|ISO 8601 time|not applicable|unknown>
+Turn: <pending|link|none>
+```
+
+The comment marker is its idempotency key. A duplicate marker or malformed current field set is a
+finding and makes the affected status `unknown`; never repair it by creating a third receipt. The
+only valid transition is `started` to one terminal status, and no terminal receipt contains
+`pending`. A write or access failure may leave `started` incomplete. Failure before any receipt
+remains `unknown` unless a trusted scheduler record establishes `failed`.
 
 `ran` means the routine reached its normal end. `idle` means it reached normal end after a
 complete eligibility scan found no eligible work. `failed` needs an explicit error or trusted
 scheduler record. A `started` receipt with no terminal update is incomplete. No receipt on an
 expected day is `unknown`; absence never proves idle or failure. `not scheduled` is allowed only
-when `ROUTINE_DAYS` excludes the date.
+when the configured calendar excludes the date and no scheduled invocation evidence exists.
 
 Before Birdsong derives a summary, it reads MEMORY_REPO `main`, every open memory PR, and every
 memory PR updated since the previous summary: their comments, commits and head versions of
-`TURNS/`. The same path on different heads is distinct evidence. It then verifies claims against
-the live WORK_REPOS inventory, comments, reviews and check runs. The previous board and summary
-are indexes to claims, never evidence for them. If a required read fails, the summary is partial
-and the affected fact is `unknown`; stale prose never substitutes for a failed query.
+`TURNS/`. For the MEMORY_REPO sweep it passes `Covered-through` from the most recent `ran`
+Birdsong receipt, never `Finished` or a later generic sweep time; when no valid cutoff exists it
+omits `--since` for a full sweep. Birdsong captures the new cutoff immediately before its first
+interval read and never advances it to the later publication or finish time, so concurrent events
+fall into the next interval rather than a gap. The same path on different heads is distinct
+evidence. It then verifies claims against the live WORK_REPOS inventory, comments, reviews and
+check runs. The previous board and
+summary are indexes to claims, never evidence for them; this live-evidence rule controls anywhere
+another memory instruction calls the board a source. If a required read fails, the summary is
+partial and the affected fact is `unknown`; stale prose never substitutes for a failed query.
+Before and after rewriting the board, its no-number WORK_REPO sweeps compare live state with the
+markers on that date's memory head. A missing, duplicate or different marker is a finding;
+Birdsong copies the emitted marker into the board and reruns the sweep until they agree.
 
 ## Memory PR Template
 🐦 Birdsong writes it and nobody else, as short as it can be said:
