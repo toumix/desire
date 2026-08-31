@@ -108,9 +108,13 @@ In MEMORY_REPO the day's PR branch wins over the assigned one.
 
 ```
 # <date>
-## What agents did today   high-level summary of activity, split by source: interactive work done
-                           under your own prompts, and Evening's autonomous round — say plainly
-                           when a round did nothing, or didn't run at all, rather than omit it.
+## Since last time         high-level summary of activity since the *previous memory PR*, not
+                           literally "today" — a PR opened at 8am has nothing to say about today's
+                           calendar date and everything to say about the days since the last one.
+                           Split by source: interactive work under your own prompts, and Evening's
+                           autonomous round — say plainly when a round did nothing, or didn't run
+                           at all, rather than omit it. Substance, not just PR numbers: what a
+                           head actually does, not just that it exists (that's the queue's job).
 ## Ready for your review   which heads are ready and what reading them costs,
                            linking the board's table rather than repeating it.
 ## Agent proposals         ideas wanting a yes or no but blocking nothing, 🚀-able.
