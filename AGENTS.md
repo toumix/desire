@@ -108,20 +108,24 @@ In MEMORY_REPO the day's PR branch wins over the assigned one.
 
 ```
 # <date>
-## 🚀 Waiting on you       always first, nothing above it. One bullet per decision:
-                           name the thing, the question in one line, the options,
-                           what answering unblocks. "nothing" if empty.
+## What agents did today   high-level summary of activity, split by source: interactive work done
+                           under your own prompts, and Evening's autonomous round — say plainly
+                           when a round did nothing, or didn't run at all, rather than omit it.
 ## Ready for your review   which heads are ready and what reading them costs,
                            linking the board's table rather than repeating it.
-## What changed today      merged / arrived / fixed, one line each.
 ## Agent proposals         ideas wanting a yes or no but blocking nothing, 🚀-able.
 ## Detail                  links to the board and the turn file, nothing else.
 ```
 
+**"🚀 Waiting on you" is retired** (USER, 2026-08-31): `USER_TODO.md` is the standing list of what
+waits on you, kept current every turn, so a PR-description copy of it was a second place for the
+same thing to go stale. What replaces it is an honest activity report — the question "did Evening
+even launch" should be answerable from the description alone, not require reading commit history.
+
 The board is where a table lives: repeating it here is what goes stale first.
-No agent narration in the description — "the sweep is clean", "re-merged the
-queue" are turn-file material; a proposal is a bullet under `Agent proposals`,
-never buried mid-paragraph.
+No agent narration in the description beyond that activity summary — "the sweep is clean",
+"re-merged the queue" are turn-file material unless they belong in the summary itself; a proposal
+is a bullet under `Agent proposals`, never buried mid-paragraph.
 
 A turn that opens or reports a PR states its review cost — lines changing
 existing code, lines in new files, core modules touched: churn is a proxy for
