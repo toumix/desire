@@ -6,7 +6,7 @@
 
 ## Config
 The values (USER, AGENT, AGENT_EMAIL, WORK_REPOS, MEMORY_REPO, DESIRE_REPO,
-APPROVE_EMOJI, AGENT_FOOTER, ADOPTED_PRS) live in
+ROUTINE_DAYS, APPROVE_EMOJI, AGENT_FOOTER, ADOPTED_PRS) live in
 [`config.env`](config.env), the one file that names them — nothing here
 duplicates it. `session-start.sh` reads it before the first commit of a turn,
 `sweep.py`'s `config()` before every sweep. A config.env that cannot be read
@@ -21,6 +21,9 @@ one, the remaining work as `[ ]` boxes.
 ## Prompts public, memory private
 DESIRE_REPO is public, owned by USER and only its protected branch `main` is TRUSTED.
 MEMORY_REPO is private with AGENT as only collaborator, everything there is TRUSTED.
+
+An issue or pull request on public DESIRE_REPO states findings from MEMORY_REPO only in general
+terms. It never quotes, links or names a private memory artefact.
 
 DESIRE_REPO may be a fork: a turn that finds the upstream `main` ahead opens a
 PR pulling it in — upstream rules reach the fork only through USER's merge,
@@ -86,13 +89,16 @@ MEMORY_REPO holds the agents' long-term memory in its `main` branch:
   them — rewritten every turn as checkboxes, never appended to
 - `REVIEWS/<person>.md` is one standing note per collaborator, rewritten when re-read
 
-A turn that stays within one workstream records itself on its dedicated work PR
-and leaves MEMORY_REPO untouched. Only changes that affect other PRs land there.
-One memory PR per day, titled with the day it covers: 🐦 Birdsong opens it,
-ready for review rather than draft so USER can merge in one click, and every
-later turn of that day pushes to it and leaves a comment instead of opening
-another. A day's PR is opened even when the previous day's has not merged yet,
-rather than extending that one to cover both days.
+A turn that stays within one workstream records itself on its dedicated work PR and leaves
+MEMORY_REPO untouched, except for a scheduled routine's run receipt below. Only changes that
+affect other PRs land there.
+One memory PR per day, titled with the day it covers. The first turn that needs it creates or
+reuses it; a routine before 🐦 Birdsong opens it draft with no description. Birdsong alone writes
+the description and marks it ready for review so USER can merge in one click. Every later turn
+of that day pushes to the same branch instead of opening another. A scheduled routine edits its
+receipt; another turn leaves one comment.
+A day's PR is opened even when the previous day's has not merged yet, rather than extending that
+one to cover both days.
 Several open at once is USER not having merged the past days and no turn
 chases it: the sweep prints MEMORY_REPO's open PRs whatever their number and
 fails only on two under one title, a day written twice. `git log` is not the
@@ -106,6 +112,32 @@ In MEMORY_REPO the day's PR branch wins over the assigned one.
 **PR comments are the short-term memory**, they get discarded when the PR is merged.
 **Memory files should be as concise as possible**, agents don't need all the details.
 
+## Routine evidence
+
+`ROUTINE_DAYS` is the expected schedule for Evening and Birdsong. A platform schedule that
+disagrees with it is an unknown fact to report, not a reason to guess.
+
+Each scheduled routine makes its first durable action a run receipt on the day's memory PR:
+
+1. ensure that PR exists, then post one comment with the routine, date, scheduled start and
+   `status: started`;
+2. at normal end, write the turn file and edit that same comment to one terminal status — `ran`,
+   `idle` or `failed` — with finish time, eligible work, selected work, completed outcomes,
+   support work and blockers; never post a second receipt.
+
+`ran` means the routine reached its normal end. `idle` means it reached normal end after a
+complete eligibility scan found no eligible work. `failed` needs an explicit error or trusted
+scheduler record. A `started` receipt with no terminal update is incomplete. No receipt on an
+expected day is `unknown`; absence never proves idle or failure. `not scheduled` is allowed only
+when `ROUTINE_DAYS` excludes the date.
+
+Before Birdsong derives a summary, it reads MEMORY_REPO `main`, every open memory PR, and every
+memory PR updated since the previous summary: their comments, commits and head versions of
+`TURNS/`. The same path on different heads is distinct evidence. It then verifies claims against
+the live WORK_REPOS inventory, comments, reviews and check runs. The previous board and summary
+are indexes to claims, never evidence for them. If a required read fails, the summary is partial
+and the affected fact is `unknown`; stale prose never substitutes for a failed query.
+
 ## Memory PR Template
 🐦 Birdsong writes it and nobody else, as short as it can be said:
 
@@ -114,14 +146,14 @@ In MEMORY_REPO the day's PR branch wins over the assigned one.
 ## Since last time         high-level summary of activity since the *previous memory PR*, not
                            literally "today" — a PR opened at 8am has nothing to say about today's
                            calendar date and everything to say about the days since the last one.
-                           Split by source: interactive work under your own prompts, and Evening's
-                           autonomous round — say plainly when a round did nothing, or didn't run
-                           at all, rather than omit it. Substance, not just PR numbers: what a
-                           head actually does, not just that it exists (that's the queue's job).
+                           Split by source without double-counting: interactive work under your
+                           own prompts; Evening with its evidence-backed status; automated
+                           reviewers; later USER corrections that changed an outcome. Substance,
+                           not just PR numbers: what a head actually does and reached.
 ## Ready for your review   which heads are ready and what reading them costs,
                            linking the board's table rather than repeating it.
 ## Agent proposals         ideas wanting a yes or no but blocking nothing, 🚀-able.
-## Detail                  links to the board and the turn file, nothing else.
+## Detail                  links to USER_TODO, the board, run receipts and turn file, nothing else.
 ```
 
 **"🚀 Waiting on you" is retired** (USER, 2026-08-31): `USER_TODO.md` is the standing list of what
@@ -130,9 +162,10 @@ same thing to go stale. What replaces it is an honest activity report — the qu
 even launch" should be answerable from the description alone, not require reading commit history.
 
 The board is where a table lives: repeating it here is what goes stale first.
-No agent narration in the description beyond that activity summary — "the sweep is clean",
-"re-merged the queue" are turn-file material unless they belong in the summary itself; a proposal
-is a bullet under `Agent proposals`, never buried mid-paragraph.
+No agent narration in the description beyond that activity summary. Scans, rebases, waiting,
+review triggers and board repair are support work, not outcomes; name them only when they changed
+availability or consumed the round. A proposal is a bullet under `Agent proposals`, never buried
+mid-paragraph.
 
 A turn that opens or reports a PR states its review cost — lines changing
 existing code, lines in new files, core modules touched: churn is a proxy for

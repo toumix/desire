@@ -2,7 +2,9 @@
 """Sweep open PRs and issues for USER signal the pipeline has not acted on:
 bodies and threads where USER spoke last, APPROVE_EMOJI reacts from USER, the
 issues closed inside the window, MEMORY_REPO's open-PR count and the state of
-each AGENT-owned `TODO.md`. A finding is marked 👀 when the pipeline has reacted
+each AGENT-owned `TODO.md`. A no-number WORK_REPO sweep also prints the live
+main SHA and complete open AGENT-owned PR inventory. A finding is marked 👀
+when the pipeline has reacted
 to say it received it. config.env is the ground truth for USER, the repos
 and the emoji; AGENTS.md's rules say what to do with a finding.
 
@@ -12,6 +14,7 @@ Usage: sweep.py [--since <ISO8601 UTC, e.g. 2026-08-18T00:00:00Z>] <owner/repo>
        # and quiets a question the pipeline already 👀'd
 Exit 0 and "clean" on a clean sweep, exit 1 with one line per finding. Open
 `TODO.md` boxes are printed as context and do not make the sweep dirty.
+Exit 2 when GitHub access prevents the sweep: that is neither clean nor a finding.
 """
 import base64
 import datetime
@@ -24,10 +27,15 @@ import urllib.error
 import urllib.request
 
 CONFIG = pathlib.Path(__file__).parents[3] / "config.env"
+GATE = "not enabled for this session"
 BOX = re.compile(r"^\s*[-*] \[([^]]*)\]")
 CLAIM = re.compile(r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?"
                    r"(?:Z|[+-]\d{2}:?\d{2})?)?")
 STALE = datetime.timedelta(hours=12)
+
+
+class NoAccess(Exception):
+    """The session cannot read repository-scoped GitHub state."""
 
 
 def config(path):
@@ -70,8 +78,14 @@ def get(repo, path):
         token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
         if token:
             request.add_header("Authorization", f"Bearer {token}")
-        with urllib.request.urlopen(request) as response:
-            items = json.load(response)
+        try:
+            with urllib.request.urlopen(request) as response:
+                items = json.load(response)
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode(errors="replace").strip()
+            if error.code == 403 and GATE in detail.lower():
+                raise NoAccess(detail) from None
+            raise
         if not isinstance(items, list):  # a single issue, comment or user
             return items
         results += items
@@ -156,22 +170,52 @@ def asking(repo, kind, target, setup, since, cache):
     return None if flag and target["created_at"] < since else flag
 
 
-def memory(repo):
+def pull_state(pull):
+    """One stable state label for the memory inventory."""
+    return "merged" if pull.get("merged_at") else pull["state"]
+
+
+def pull_line(pull):
+    """The fields needed to discover evidence on a non-main memory head."""
+    head = pull["head"]
+    return (f"#{pull['number']} {pull_state(pull)} {pull['updated_at']} "
+            f"{head['ref']}@{head['sha']}: {pull['title']} "
+            f"{pull['html_url']}")
+
+
+def memory(repo, since):
     """MEMORY_REPO holds one open PR per day, checked whatever the window since
     it is an invariant rather than a delta. Several open at once is USER not
     having merged the past days, which is theirs and no finding of ours; two
     under one title is a day written twice, which is ours. The count and the
     URLs are printed either way, so a turn sees what is waiting to be merged
     without the sweep calling it dirty."""
-    open_prs = get(repo, "pulls?state=open")
+    pulls = get(repo, "pulls?state=all&sort=updated&direction=desc")
+    open_prs = [pull for pull in pulls if pull["state"] == "open"]
+    recent = [pull for pull in pulls
+              if since and pull["state"] != "open" and pull["updated_at"] >= since]
     print(f"{repo}: {len(open_prs)} open PR(s)"
-          + "".join("\n  " + pr["html_url"] for pr in open_prs), file=sys.stderr)
+          + "".join("\n  " + pull_line(pull) for pull in open_prs)
+          + ("\nupdated since last sweep:"
+             + "".join("\n  " + pull_line(pull) for pull in recent)
+             if recent else ""), file=sys.stderr)
     days = {}
     for pull in open_prs:
         days.setdefault(pull["title"], []).append(pull["html_url"])
     return [f"{repo}: {len(urls)} open PRs titled {title!r}, one a day is the"
             " rule — push to one and close the rest: " + ", ".join(urls)
             for title, urls in days.items() if len(urls) > 1]
+
+
+def work_state(repo, setup, cache):
+    """Live invariants the board must re-derive rather than carry forward."""
+    main = get(repo, "commits/main")["sha"]
+    adopted = set(setup.get("ADOPTED_PRS", {}).get(repo, []))
+    numbers = sorted(
+        number for number, pull in heads(repo, cache).items()
+        if pull["user"]["login"] == setup["AGENT"] or number in adopted)
+    listed = ",".join(f"#{number}" for number in numbers) or "none"
+    return f"{repo}: live main {main}; open AGENT-owned PRs {listed}"
 
 
 def heads(repo, cache):
@@ -336,7 +380,9 @@ def sweep(repo, numbers, since, setup):
     """One line per finding, empty when the sweep is clean."""
     cache, findings = {}, []
     if repo == setup["MEMORY_REPO"] and not numbers:
-        findings += memory(repo)
+        findings += memory(repo, since)
+    if repo in setup["WORK_REPOS"] and not numbers:
+        print(work_state(repo, setup, cache), file=sys.stderr)
     if not numbers:
         findings += closed_since(repo, since)
         numbers = sorted({
@@ -350,8 +396,13 @@ def main(arguments):
     since = ""  # ISO 8601 UTC sorts lexicographically, so "" is the epoch
     if arguments and arguments[0] == "--since":
         _, since, *arguments = arguments
-    findings = sweep(arguments[0], [int(n) for n in arguments[1:]], since,
-                     config(CONFIG))
+    try:
+        findings = sweep(arguments[0], [int(n) for n in arguments[1:]], since,
+                         config(CONFIG))
+    except NoAccess as error:
+        print(f"cannot sweep {arguments[0]}: GitHub access unavailable; not clean\n{error}",
+              file=sys.stderr)
+        return 2
     print("\n".join(findings) if findings else "clean", file=sys.stderr)
     return 1 if findings else 0
 
