@@ -9,17 +9,15 @@ Entries state the changes, no explanation of why.
 ([#139](https://github.com/toumix/desire/pull/139), closes
 [#115](https://github.com/toumix/desire/issues/115)) — the 189 lines evicted from the board on
 08-26 are sorted and the pile is emptied. `AGENTS.md` gains four: the gate is USER's review time
-and no turn proposes a batch; trust settles whether to act while evidence settles what is true;
-measure the claim rather than a proxy, since a green suite does not vouch for a merge resolution
-and a "blocked" someone wrote down is state; and `git merge-tree` against the base is degenerate,
-so it measures a pair and never a branch against its base. `RULES.md` gains two: a review bot's
-severity is not evidence and rule 1 outranks it, and draft state is not a readiness signal because
-the guard is one-directional. `EVENING.md` gains two: the overlap that justifies a re-merge is
-measured on paths, and the commit-status API is not the check-run API — a head with no `build` run
-is a merge conflict, not a slow runner. The rest of the pile is dropped: roughly half had already
-landed in the prompts since 08-26, the queue-shaped entries were superseded by `WORK/<repo>/<number>.md`,
-"one memory PR at a time" was contradicted by one per day, and the measurements and housekeeping
-lines were state rather than convention.
+and no turn proposes a batch; trust settles whether to act while evidence settles what is true; a
+claim is measured rather than inferred from a green suite or from a "blocked" someone wrote down;
+and `git merge-tree` with the base on one side is degenerate, so it measures a pair rather than a
+branch against its base. `RULES.md` gains two: rule 1 that a review bot's severity is not evidence
+and that rule 1 outranks it, rule 2 that draft state is not a readiness signal. `EVENING.md` gains
+two: the overlap that justifies a re-merge is measured on paths, and the commit-status API is not
+the check-run API — a head with no `build` run is a merge conflict, not a slow runner. The rest of
+the pile is dropped, each entry either already carried by the prompts, replaced by
+`WORK/<repo>/<number>.md` and the one-memory-PR-per-day rule, or state rather than convention.
 
 ## 2026-09-01
 

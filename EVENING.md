@@ -15,7 +15,7 @@
   re-merging the queue is a night with nothing finished, and should read that way
 - it merges the target branch into its head when there is a reason to — an overlap it measured, a
   `TODO` point, a review request, a check that needs the current base — not because a behind-count
-  is nonzero. The overlap is measured on paths: the files the commits the base gained touch,
+  is nonzero. The overlap is measured on paths: the files touched by the commits the base gained,
   intersected with the files the head itself changed since its merge base
 - **it enumerates the expected checks before calling CI green**: a check that was never created is
   pending, not passing, and a query that failed is unknown, not green. The commit-status API is
