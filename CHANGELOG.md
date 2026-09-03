@@ -3,6 +3,16 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-09-03
+
+**Timed self check-ins are denied in settings, not asked for in prose** (`template/memory/`) —
+`.claude/settings.json` carries a `permissions.deny` on `send_later`, `create_trigger`,
+`update_trigger`, `fire_trigger`, `ScheduleWakeup` and `CronCreate`, and `session-start.sh`
+merges the same list into `~/.claude/settings.json` at every start, since the container is
+fresh each time. The harness refuses the call before the model can make it. Replaces nothing:
+the webhook-only rule for a runtime that can wake on GitHub events never changed, it was only
+not followed.
+
 ## 2026-09-02
 
 **Idle pull-request heartbeats back off to eight times their starting interval**
