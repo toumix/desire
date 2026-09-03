@@ -5,13 +5,18 @@ Entries state the changes, no explanation of why.
 
 ## 2026-09-03
 
+**The webhook-only rule is back, generalized rather than restored verbatim**
+(`AGENTS.md`) — a runtime that can wake on GitHub events watches a PR by webhook and never
+schedules a timed self check-in; #136 dropped this sentence when it added the Codex heartbeat,
+which is now scoped explicitly to runtimes that cannot wake on a webhook, Codex being the
+standing case. Corrects the entry below, from earlier the same day, which wrongly said the old
+rule "never changed."
+
 **Timed self check-ins are denied in settings, not asked for in prose** (`template/memory/`) —
 `.claude/settings.json` carries a `permissions.deny` on `send_later`, `create_trigger`,
 `update_trigger`, `fire_trigger`, `ScheduleWakeup` and `CronCreate`, and `session-start.sh`
 merges the same list into `~/.claude/settings.json` at every start, since the container is
-fresh each time. The harness refuses the call before the model can make it. Replaces nothing:
-the webhook-only rule for a runtime that can wake on GitHub events never changed, it was only
-not followed.
+fresh each time. The harness refuses the call before the model can make it.
 
 ## 2026-09-02
 
