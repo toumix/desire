@@ -12,8 +12,9 @@ Software engineering prompts inspired by the asymmetric board game Root:
 
 [AGENTS.md](AGENTS.md) is the operating base they all follow: the two layers of memory, what
 authorizes a change — with the values it runs on in `config.env`, which lives in your
-MEMORY_REPO. It is deliberately short (under a hundred lines with the phase files) because every
-line of it is loaded into every session. Some guiding principles:
+MEMORY_REPO. It is kept to the rules themselves because every line of it is loaded into every
+session; the machinery behind them, needed only when something misbehaves, lives in
+[OPERATIONS.md](OPERATIONS.md), which is not. Some guiding principles:
 
 - **Asynchronous feedback via GitHub PRs**, you don't need an interactive chat to get stuff done.
 - **Synchronous feedback via chat sessions**, but they start with the bigger picture in mind.
