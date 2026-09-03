@@ -5,6 +5,22 @@ Entries state the changes, no explanation of why.
 
 ## 2026-09-03
 
+**The MEMORY_REPO day-PR-branch rule is standing permission, not a per-turn ask** (`AGENTS.md`) —
+the branch clause is strengthened to say the day PR branch wins over whatever branch a session was
+assigned *without asking USER each time*, and to name the case it kept snagging on: a harness or
+task that pins the session to one branch and forbids pushing elsewhere without permission. USER's
+standing grant is that authorization. Clarifies
+[#45](https://github.com/toumix/desire/pull/45)'s "the open memory PR's branch wins over the
+assigned one" rather than replacing it — it was being read as blocked by the per-session assignment.
+
+**The prompts are slimmed: AGENTS.md keeps the rules, OPERATIONS.md holds the machinery**
+(`AGENTS.md`, `OPERATIONS.md`, `README.md`) — historical justification that this changelog already
+carries is cut from `AGENTS.md`, and the mechanism/recovery detail (config-reader paths, the
+shallow-clone check, the sweep's `--since` semantics, footer matching, the signing-hook setup) moves
+to a new `OPERATIONS.md` that `CLAUDE.md` does not import, so the every-session context is the rules
+alone. No rule's meaning changes. `AGENTS.md` 276→195 lines. The README's "under a hundred lines"
+claim is replaced with the rules-vs-machinery split.
+
 **The webhook-only rule is back, generalized rather than restored verbatim**
 (`AGENTS.md`) — a runtime that can wake on GitHub events watches a PR by webhook and never
 schedules a timed self check-in; #136 dropped this sentence when it added the Codex heartbeat,

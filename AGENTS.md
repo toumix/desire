@@ -91,8 +91,12 @@ whose lifetime is the day (the turn file, the board, `USER_TODO.md`, `WORK/` not
 turn of that day pushes there and leaves a comment rather than opening another. A day's PR is opened
 even when the previous day's has not merged. If no day PR is open, the turn opens one — Birdsong
 normally does, but any turn may, rather than borrowing whichever branch is open. Branch names carry
-nothing — use the one you were assigned or open a new one — except in MEMORY_REPO, where this day PR
-branch wins over the assigned one.
+nothing: outside MEMORY_REPO, use the one you were assigned or open a new one. **In MEMORY_REPO the
+day's PR branch wins over whatever branch the session was assigned, and this is standing USER
+permission, not a per-turn ask.** When a harness or task pins the session to one branch and forbids
+pushing elsewhere without permission, pushing the day's memory work to the day PR branch is the
+exception USER has already granted — take it without stopping to ask; a memory turn that asks which
+branch has misread this rule.
 
 A file that is a substantial read in its own right, `OTHERS/<person>.md` above all, opens its own
 pull request the first time it is written, titled for the file rather than the day, so USER can
