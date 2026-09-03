@@ -84,12 +84,7 @@ else
   log "no AGENTS_SIGNING_KEY in env — commits stay unsigned"
 fi
 
-# Timed self check-ins are never allowed (USER, 2026-09-03: "how do i ensure you are NEVER
-# ALLOWED TO USE ARMED CHECK INS"). The harness's own prompt asks every session that opens a
-# pull request to arm an hourly wake and re-arm it silently until the PR closes; a note in a
-# prompt did not stop it, a permission deny does: the harness refuses the call before the model
-# can make it. The container is fresh every session, so the deny is written into the user
-# settings here, merged with whatever is there, beside the same list in .claude/settings.json.
+# Timed self check-ins: denied here per AGENTS.md, see CHANGELOG.md for why.
 deny='["mcp__Claude_Code_Remote__send_later","mcp__Claude_Code_Remote__create_trigger","mcp__Claude_Code_Remote__update_trigger","mcp__Claude_Code_Remote__fire_trigger","ScheduleWakeup","CronCreate"]'
 settings="$HOME/.claude/settings.json"
 mkdir -p "$HOME/.claude"
