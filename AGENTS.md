@@ -186,7 +186,9 @@ small** (USER, 2026-10-14).
 
 - Next `main` is upstream `main` plus work meant to go upstream. Agents merge into it themselves
   once its checks pass: no human review and no `TODO.md` gate there.
-- Experiments live on branches of the next repo, never on its `main`, and are not measured.
+- No experiment branches: agents' work goes into next `main` under the rules of this list, small
+  experiments as notebooks, and a big speculative one moves to a repository of its own (USER,
+  2026-10-14).
 - Down: upstream `main` is merged into next `main` every night, never rebased.
 - Up: an upstream PR is opened only at USER's request, cut from upstream `main` and small enough to
   read; agents propose the slices, they do not open one per change on next `main`.
