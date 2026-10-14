@@ -5,6 +5,10 @@ Entries state the changes, no explanation of why.
 
 ## 2026-10-14
 
+**No experiment branches on a next repo** (`AGENTS.md`) — what merges without conflict goes into
+next `main`, small experiments as notebooks, and a big speculative one moves to a repository of its
+own. Replaces "experiments live on branches of the next repo", from the same day.
+
 **Next repos: agents merge into a mirror of a WORK_REPO and keep its drift small**
 (`AGENTS.md`, `EVENING.md`, `BIRDSONG.md`, `template/memory/config.env`) — a tenth config value,
 NEXT_REPOS, pairs an upstream with its next repo. `AGENTS.md` gains a `Next repos` section: next
