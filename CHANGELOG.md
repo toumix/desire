@@ -5,8 +5,8 @@ Entries state the changes, no explanation of why.
 
 ## 2026-10-14
 
-**No experiment branches on a next repo** (`AGENTS.md`) — what merges without conflict goes into
-next `main`, small experiments as notebooks, and a big speculative one moves to a repository of its
+**No experiment branches on a next repo** (`AGENTS.md`) — agents' work goes into next `main` under
+the section's other rules, small experiments as notebooks, and a big speculative one moves to a repository of its
 own. Replaces "experiments live on branches of the next repo", from the same day.
 
 **Next repos: agents merge into a mirror of a WORK_REPO and keep its drift small**
