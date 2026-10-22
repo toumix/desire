@@ -5,9 +5,8 @@ Entries state the changes, no explanation of why.
 
 ## 2026-10-22
 
-**No experiment branches on a next repo** (`AGENTS.md`) — small experiments go into next `main` as
-notebooks, a big speculative one moves to a repository of its own. Replaces "experiments live on
-branches of the next repo" from 2026-10-14
+**Next repos lose their experiments line** (`AGENTS.md`) — "experiments live on branches of the
+next repo, never on its `main`", from 2026-10-14, is deleted
 ([#163](https://github.com/toumix/desire/issues/163)).
 
 ## 2026-10-21
