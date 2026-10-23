@@ -3,6 +3,15 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-10-23
+
+**The experiment-ladder skill** (`.agents/skills/experiment-ladder/`, `.claude/skills/`) — a GPU
+budget spent in rungs: smoke test, scaling curve, matched-compute comparison, then the full run;
+warmup–stable–decay cool-downs for curves, μP and the spectral condition for hyperparameters that
+transfer across width, held-out tasks and sealed reads for evaluation. Binds nothing: a session
+loads it when it plans training runs. USER: *"can you bundle this into a reusable skill? seems all
+like very useful strategies!"*
+
 ## 2026-10-22
 
 **Role files are run orders; a rule is stated once** (`BIRDSONG.md`, `EVENING.md`, `DAYLIGHT.md`,
