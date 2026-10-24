@@ -43,6 +43,24 @@ Freshness compares whole UTC dates, like the existing sweep: an update on the
 same day does not prove staleness. Legacy notes with a read date on `state` still
 get this comparison while failing the structural check.
 
+## Upgrading an existing clone
+
+From the directory containing the desire and memory clones, copy these files
+from the reviewed desire version, preserving the same paths below the memory root:
+
+```sh
+mkdir -p memory/scripts memory/tests memory/docs memory/.github/workflows
+cp desire/template/memory/scripts/lint_memory.py memory/scripts/
+cp desire/template/memory/tests/test_lint_memory.py memory/tests/
+cp desire/template/memory/requirements-lint.txt memory/
+cp desire/template/memory/.github/workflows/lint.yml memory/.github/workflows/
+cp desire/template/memory/docs/lint.md memory/docs/
+```
+
+Review any existing file at those paths before replacing it. Keep your config,
+board and notes. Install the dependencies and run the commands above. Desire's
+copy check expects the script, tests, requirements and workflow to match the seed.
+
 ## Online audit
 
 ```sh

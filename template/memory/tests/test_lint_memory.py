@@ -108,6 +108,47 @@ class AuditTest(unittest.TestCase):
         self.assertEqual(len(findings), 3, findings)
         self.assertFalse(any("ignored" in f for f in findings))
 
+    def test_balanced_parentheses_in_bare_and_markdown_urls(self):
+        url = "https://example.test/Foo_(bar)"
+        for text in (url, "(" + url + ").", "[label](" + url + ")", "[label][ref]\n\n[ref]: " + url):
+            self.assertEqual({target for _, target in lint.links(text)}, {url}, text)
+        ipv6 = "http://[::1]/page"
+        self.assertEqual({target for _, target in lint.links(ipv6)}, {ipv6})
+
+    def test_bad_url_does_not_abort_other_checks(self):
+        self.write("README.md", "http://[x\n[broken](missing.md)\n")
+        findings = self.audit().findings
+        self.assertTrue(any("invalid-link" in f for f in findings))
+        self.assertTrue(any("missing.md" in f for f in findings))
+
+    def test_diagnostics_preserve_source_order(self):
+        self.write("README.md", "[second](b.md)\n\n[first](a.md)\n\n[second again](b.md)\n")
+        findings = self.audit().findings
+        self.assertEqual([f.split(":")[1] for f in findings], ["1", "3", "5"])
+        self.assertIn("b.md", findings[0])
+
+    def test_spaced_explicit_anchors_and_utf8_target_reads(self):
+        self.write("docs/target.md", '# Café\n<a id = "intro"></a>\n<a name = "legacy"></a>\n')
+        self.write("README.md", "[one](docs/target.md#intro)\n[two](docs/target.md#legacy)\n[three](docs/target.md#café)\n")
+        read_text = Path.read_text
+        def read(path, *args, **kwargs):
+            self.assertEqual(kwargs.get("encoding"), "utf-8")
+            return read_text(path, *args, **kwargs)
+        with patch.object(Path, "read_text", read):
+            self.assertEqual(self.audit().findings, [])
+
+    def test_unreadable_note_keeps_findings_and_continues(self):
+        self.write("config.env", "WORK_REPOS=owner/project\nAGENT=bot\n")
+        self.write("docs/a.md", "[broken](missing-a.md)")
+        self.write("docs/b.md", "placeholder")
+        (self.root / "docs/b.md").write_bytes(b"\xff")
+        self.write("docs/c.md", "[broken](missing-c.md)")
+        with patch("sys.stdout", new_callable=io.StringIO) as output, patch("sys.stderr", new_callable=io.StringIO) as errors:
+            self.assertEqual(lint.main(["--root", str(self.root)]), 2)
+        self.assertIn("missing-a.md", output.getvalue())
+        self.assertIn("missing-c.md", output.getvalue())
+        self.assertIn("docs/b.md", errors.getvalue())
+
     def test_sync_missing_closed_stale_authored_adopted_and_cross_cites(self):
         self.write("WORK/project/1.md", NOTE + "\nother#3 https://github.com/owner/other/issues/5\n")
         self.write("WORK/project/2.md", NOTE.replace("project#1", "project#2"))

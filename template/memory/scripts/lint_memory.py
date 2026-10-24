@@ -57,8 +57,13 @@ def links(text):
     # Bare URLs in notes are also evidence, even without Markdown markup.
     for number, line in enumerate(prose(text), 1):
         line = re.sub(r"`+[^`]*`+", "", line)
-        for match in re.finditer(r"https?://[^\s<>\]\)]+", line):
-            yield number, match.group().rstrip(".,;:!\"'")
+        for match in re.finditer(r"https?://[^\s<>\"']+", line):
+            url = match.group().rstrip(".,;:!")
+            # Keep balanced URL punctuation; drop Markdown/prose delimiters.
+            while url and ((url.endswith(")") and url.count(")") > url.count("("))
+                           or (url.endswith("]") and url.count("]") > url.count("["))):
+                url = url[:-1].rstrip(".,;:!")
+            yield number, url
 
 
 def anchors(text):
@@ -75,7 +80,7 @@ def anchors(text):
         suffix = f"-{counts[slug]}" if counts[slug] else ""
         counts[slug] += 1
         result.add(slug + suffix)
-    result.update(re.findall(r'\b(?:id|name)=["\']([^"\']+)["\']', text))
+    result.update(re.findall(r'\b(?:id|name)\s*=\s*["\']([^"\']+)["\']', text))
     return result
 
 
@@ -104,7 +109,11 @@ class Audit:
             relative = path.relative_to(self.root)
             if any(part.startswith(".") for part in relative.parts[:-1]) and relative.parts[0] != ".github":
                 continue
-            text = path.read_text(encoding="utf-8")
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeError) as error:
+                self.incomplete.append(f"{relative}: Markdown unreadable: {error}")
+                continue
             self.texts[relative] = text
             lines = prose(text)
             for number, line in enumerate(lines, 1):
@@ -114,7 +123,7 @@ class Audit:
                 self.add(relative, 1, "board-length", "board must stay under 200 lines")
             if relative.parts[0] == "WORK" and relative != Path("WORK/TEMPLATE.md"):
                 self.note(relative, lines)
-            for number, url in set(links(text)):
+            for number, url in dict.fromkeys(sorted(links(text), key=lambda link: link[0])):
                 self.link(relative, number, url)
 
     def note(self, path, lines):
@@ -156,7 +165,11 @@ class Audit:
             self.add(path, 1, "log-order", "turn log must be newest first")
 
     def link(self, path, line, url):
-        parsed = urlsplit(url)
+        try:
+            parsed = urlsplit(url)
+        except ValueError as error:
+            self.add(path, line, "invalid-link", f"{url}: {error}")
+            return
         if parsed.scheme in {"http", "https"}:
             self.urls.setdefault(urldefrag(url)[0], (path, line))
             return
@@ -170,8 +183,14 @@ class Audit:
             self.add(path, line, "local-link", f"link leaves the repo: {url}")
         elif not target.exists():
             self.add(path, line, "local-link", f"missing target: {url}")
-        elif parsed.fragment and target.suffix == ".md" and unquote(parsed.fragment) not in anchors(target.read_text()):
-            self.add(path, line, "local-anchor", f"missing heading/anchor: {url}")
+        elif parsed.fragment and target.suffix == ".md":
+            try:
+                found = anchors(target.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError) as error:
+                self.incomplete.append(f"{path}:{line}: {url}: target unreadable: {error}")
+                return
+            if unquote(parsed.fragment) not in found:
+                self.add(path, line, "local-anchor", f"missing heading/anchor: {url}")
 
     def github(self, get):
         """Full open-item lists: closed notes, missing required notes, freshness."""
