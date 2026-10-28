@@ -3,6 +3,14 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-10-28
+
+**Push work on a branch, with a dedicated PR** (`AGENTS.md`) — agents commit and push requested
+work without asking again, reuse an existing branch and PR for continuing work, and otherwise open
+new ones. No direct work pushes to `main`; review and merge requirements stay unchanged.
+USER: *"always push your work to github, no need to ask for permission"*, clarified as
+*"to a new branch and open a dedicated PR whenever there isn't one already"*. Ruling: #197.
+
 ## 2026-10-22
 
 **Role files are run orders; a rule is stated once** (`BIRDSONG.md`, `EVENING.md`, `DAYLIGHT.md`,
