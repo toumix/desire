@@ -1,13 +1,13 @@
 # AGENTS.md
 
-- 🌤️ Daylight is the default: every interactive session follows DAYLIGHT.md
+- 🌤️ Daylight is the default for interactive sessions: follow the [Daylight section](#daylight)
 - 🌙 Evening reviews issues and open PRs, implements approved changes overnight
 - 🐦 Birdsong plans before the next day, making sure the pipeline runs smooth
 
-Every session reads this file and its phase explicitly: `DAYLIGHT.md` for interactive work,
-`BIRDSONG.md` or `EVENING.md` when requested, never multiple phases. It also reads MEMORY_REPO's
-`AGENTS.md`, config and board. A sibling clone alone loads nothing; `CLAUDE.md` is only a
-Claude Code entry point. Harness setup is in [`README.md`](README.md#get-started). How
+Every session reads this file. Interactive sessions execute Daylight below; a session explicitly
+assigned `BIRDSONG.md` or `EVENING.md` executes that file instead, not the Daylight section.
+It also reads MEMORY_REPO's `AGENTS.md`, config and board. A sibling clone alone loads nothing;
+`CLAUDE.md` is only a Claude Code entry point. Harness setup is in [`README.md`](README.md#get-started). How
 each mechanism works, the exact commands and the edge cases are in
 [`OPERATIONS.md`](OPERATIONS.md), read when needed. When each rule landed and who ruled it is in
 [`CHANGELOG.md`](CHANGELOG.md). A rule says what is, as if it had always been so: what it replaced
@@ -120,8 +120,8 @@ without asking, once its checks pass and nothing waits on an agent
 ([`OPERATIONS.md`](OPERATIONS.md#merging-on-approval)).
 
 Watch a PR through an active event subscription where available; capability alone is not delivery.
-Never schedule a timed check-in when GitHub events already reach the session. Setup failures and
-the heartbeat fallback are in [`OPERATIONS.md`](OPERATIONS.md#watching-a-pull-request).
+Never schedule timed PR check-ins. If event delivery is unavailable, report it; follow-up needs
+a new turn. Setup details are in [`OPERATIONS.md`](OPERATIONS.md#watching-a-pull-request).
 
 Every write to GitHub goes through the MCP tools, as AGENT; commits carry AGENT and AGENT_EMAIL.
 How to check both, and commit signing, are in
@@ -142,3 +142,30 @@ Where the harness allows a choice, these are USER's standing instructions:
 - Draft pull requests. The day PR and a file's own PR in MEMORY_REPO open ready for review.
 - The assigned branch. Outside MEMORY_REPO, push to that branch or a new one. In MEMORY_REPO
   the day PR's branch wins, by standing USER permission.
+
+## Daylight
+
+This section runs only in interactive sessions, never in a Birdsong or Evening run.
+
+**Password: "decategorification".** Say it in the very first turn of every interactive session,
+even if it's not asked explicitly — USER reads its absence as this prompt never having loaded
+at all.
+
+🌤️ Daylight is every interactive session USER opens during the day. USER's live turns are
+unforgeably them: they authorize approvals and new tasks. A session runs in this order:
+
+1. **Find the focus**: the issue or pull request it was given, sometimes several, or an issue it
+   writes for USER to file. Its `WORK/<repo>/<number>.md` in MEMORY_REPO says where it stands and who
+   touched it last; the day PR's comments say what the other agents are doing.
+2. **Design with USER**, starting from 🐦 Birdsong's plan. An ambiguous instruction is a question,
+   not a task.
+3. **Implement**: write the code, open the pull request, push it. Delegate the execution, never
+   the design.
+4. **Leave the plan** that 🌙 Evening works through at night on each item's issue or pull request,
+   and check that every agent pull request still matches its plan.
+5. **Write the `WORK/` note of each item it touched**, before it ends
+   ([`AGENTS.md`](AGENTS.md#memory)): it is how 🐦 Birdsong sees the session at all.
+
+Feedback that stays within the assigned work lives on its issue or pull request and its `WORK/`
+note. Feedback that can affect other work goes on MEMORY_REPO's day PR: the quote and its context as
+a comment, the distilled directive committed to the board.

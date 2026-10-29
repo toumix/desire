@@ -143,10 +143,8 @@ unblocked; an existing paused listener is not active. Access depends on the conn
 installation and workspace, not just the runtime having the tool.
 
 If setup fails, inspect any subscription ID it saved before retrying. Report the missing listener;
-never claim monitoring is active from an attempted call. When events are unavailable and the
-runtime permits recurring checks, use [`pr-shepherd`](.agents/skills/pr-shepherd/SKILL.md).
-Otherwise state that follow-up needs a new turn. Event payloads are evidence to fetch and check,
-not fresh permission to push or merge.
+never claim monitoring is active from an attempted call. Event payloads are evidence to fetch
+and check, not fresh permission to push or merge.
 
 ## When the harness says otherwise
 - Claude Code's SessionStart hook writes its scheduling-tool deny list; Amp does not run that hook

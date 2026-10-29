@@ -7,7 +7,7 @@
 Software engineering prompts inspired by the asymmetric board game Root:
 
 - 🐦 [Birdsong](BIRDSONG.md) plans, asynchronously, before the day starts
-- 🌤️ [Daylight](DAYLIGHT.md) activates in every interactive session you open
+- 🌤️ [Daylight](AGENTS.md#daylight) activates in every interactive session you open
 - 🌙 [Evening](EVENING.md) reviews and implements, overnight, what you approved
 
 [AGENTS.md](AGENTS.md) is the operating base they all follow: the two layers of memory, what
@@ -51,15 +51,17 @@ applies when the working directory is a WORK_REPO. For orbs with the clones unde
 
 ```text
 Before the first response or task action, read ~/workspace/repos/desire/AGENTS.md.
-Read DAYLIGHT.md from that clone for interactive sessions, or only BIRDSONG.md or EVENING.md
-when explicitly requested. Read ~/workspace/repos/memory/AGENTS.md, config.env and README.md,
-and the work notes needed for the task. If any required file is unavailable, say so.
+For interactive sessions, follow its Daylight section. When explicitly requested, read
+~/workspace/repos/desire/BIRDSONG.md or ~/workspace/repos/desire/EVENING.md instead
+and do not execute Daylight. Read ~/workspace/repos/memory/AGENTS.md,
+~/workspace/repos/memory/config.env and ~/workspace/repos/memory/README.md,
+and the needed notes under ~/workspace/repos/memory/WORK/.
+If any required file is unavailable, say so.
 ```
 
-The loader chooses the phase at runtime: do not unconditionally import Daylight into `AGENTS.md`,
-which scheduled sessions also read. Amp supports `@` references in guidance, but `CLAUDE.md`'s
-imports are not added when `AGENTS.md` takes precedence. Never place private config values in
-public guidance.
+Daylight is part of the shared operating file, but only interactive sessions execute it.
+Amp supports `@` references in guidance, but `CLAUDE.md`'s imports are not added when `AGENTS.md`
+takes precedence. Never place private config values in public guidance.
 
 Skills in the sibling clones need discovery too. Add their `.agents/skills/` directories to
 `amp.skills.path` and reload skills, or install them as personal/workspace skills. Confirm the
@@ -70,12 +72,6 @@ Use Amp's orb setup mechanism for dependency installation; `.claude/` startup ho
 denies are Claude Code-specific. Follow [Identity and signing](OPERATIONS.md#identity-and-signing)
 for authorship without replacing Amp's managed signer, and
 [Watching a pull request](OPERATIONS.md#watching-a-pull-request) for event delivery.
-
-## Keep Codex pull requests listening
-
-Each Codex task that opens a pull request schedules its own heartbeat. It checks for your feedback
-and valid in-scope bug or style reports from anyone, acts on them, backs off while the pull request
-is idle, and deletes itself when the pull request merges or closes. No setup.
 
 ## Verified commits
 
