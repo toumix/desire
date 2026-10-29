@@ -115,6 +115,10 @@ PR states its review cost: lines changing existing code, lines in new files, cor
 Conventions for closing keywords and threads are in
 [`OPERATIONS.md`](OPERATIONS.md#issues-and-reviews).
 
+**Push requested work without asking again.** Outside `MEMORY_REPO`, continue on the existing
+branch only while its pull request is open; otherwise create a new branch and open a dedicated
+pull request. In `MEMORY_REPO`, follow the day/file PR workflow.
+
 USER's approving review is the go to merge: an agent merges one of our pull requests USER approved,
 without asking, once its checks pass and nothing waits on an agent
 ([`OPERATIONS.md`](OPERATIONS.md#merging-on-approval)).

@@ -19,6 +19,14 @@ anymore"*, *"let's remove the DAYLIGHT.md as a file and make it into a section o
 *"just remove the file altogether it's not needed anymore"* (on `CLAUDE.md`).
 Closes #201.
 
+## 2026-10-28
+
+**Push work on a branch, with a dedicated PR** (`AGENTS.md`) — agents commit and push requested
+work without asking again. Outside `MEMORY_REPO`, reuse a branch only while its PR is open;
+otherwise open a new branch and dedicated PR. Memory keeps its day/file PR workflow.
+USER: *"always push your work to github, no need to ask for permission"*, clarified as
+*"to a new branch and open a dedicated PR whenever there isn't one already"*. Ruling: #197.
+
 ## 2026-10-22
 
 **Role files are run orders; a rule is stated once** (`BIRDSONG.md`, `EVENING.md`, `DAYLIGHT.md`,
