@@ -6,8 +6,8 @@
 
 Every session reads this file. Interactive sessions execute Daylight below; a session explicitly
 assigned `BIRDSONG.md` or `EVENING.md` executes that file instead, not the Daylight section.
-It also reads MEMORY_REPO's `AGENTS.md`, config and board. A sibling clone alone loads nothing;
-`CLAUDE.md` is only a Claude Code entry point. Harness setup is in [`README.md`](README.md#get-started). How
+It also reads MEMORY_REPO's `AGENTS.md`, config and board. A sibling clone alone loads nothing.
+Harness setup is in [`README.md`](README.md#get-started). How
 each mechanism works, the exact commands and the edge cases are in
 [`OPERATIONS.md`](OPERATIONS.md), read when needed. When each rule landed and who ruled it is in
 [`CHANGELOG.md`](CHANGELOG.md). A rule says what is, as if it had always been so: what it replaced

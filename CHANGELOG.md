@@ -7,15 +7,16 @@ Entries state the changes, no explanation of why.
 
 **Amp entry points and runtime boundaries** (`AGENTS.md`, `OPERATIONS.md`, `README.md`,
 `CLAUDE.md`, `.github/lint.py`, `template/README.md`, `.agents/skills/pr-shepherd/`) — Daylight
-moves into `AGENTS.md` as an interactive-only section and its separate file is deleted. Claude
-loads only the operating rules; scheduled runs select Birdsong or Evening. The heartbeat fallback
+moves into `AGENTS.md` as an interactive-only section and its separate file is deleted. The obsolete
+`CLAUDE.md` entry point is removed; scheduled runs select Birdsong or Evening. The heartbeat fallback
 and its skill are removed. Amp setup covers global guidance, sibling skills and separately
 configured schedules. Rules respect the harness's
 instruction hierarchy. Identity checks discover the MCP tool and set local authorship, preserving
 Amp-managed signing. PR monitoring verifies active subscriptions and reports unavailable follow-up.
 Read-only discussion with no work or new durable directive requires no memory writeback.
 USER: *"update the prompts open a PR"*, *"let's remove that fallback altogether it's not needed
-anymore"*, *"let's remove the DAYLIGHT.md as a file and make it into a section of AGENTS.md"*.
+anymore"*, *"let's remove the DAYLIGHT.md as a file and make it into a section of AGENTS.md"*,
+*"just remove the file altogether it's not needed anymore"* (on `CLAUDE.md`).
 Closes #201.
 
 ## 2026-10-22

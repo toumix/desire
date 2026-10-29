@@ -31,7 +31,7 @@ session; the machinery behind them, needed only when something misbehaves, lives
    there and not here because this repo is public and the repos you work in need not be, and the
    sweep is seeded beside it because that is the file it reads.
 3) Integrate it to your model provider, adding the `memory` and `desire` repos alongside your work.
-   Use the [Amp setup](#amp) below, or Claude Code's `CLAUDE.md` entry point. Configure scheduled
+   Use the [Amp setup](#amp) below, or have your harness explicitly read `AGENTS.md`. Configure scheduled
    runs separately with `Follow <path-to-desire>/BIRDSONG.md` (before your day) and
    `Follow <path-to-desire>/EVENING.md` (overnight), also loading the operating rules and memory.
    Moving the files to another harness does not migrate the schedules; check their timezone and

@@ -16,7 +16,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SEED = ROOT / "template" / "memory"
 
 # The prompts a session loads, and the bytes all of them may take together.
-PROMPTS = ["CLAUDE.md", "BIRDSONG.md", "EVENING.md"]
+PROMPTS = ["AGENTS.md", "BIRDSONG.md", "EVENING.md"]
 BUDGET = 30_000
 
 # The MCP servers a deny list may name: a wrong server name denies nothing.
