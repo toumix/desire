@@ -6,8 +6,9 @@ Entries state the changes, no explanation of why.
 ## 2026-10-28
 
 **Push work on a branch, with a dedicated PR** (`AGENTS.md`) — agents commit and push requested
-work without asking again, reuse an existing branch and PR for continuing work, and otherwise open
-new ones. No direct work pushes to `main`; review and merge requirements stay unchanged.
+work without asking again. Outside `MEMORY_REPO`, reuse a branch only while its PR is open;
+otherwise open a new branch and dedicated PR. Memory keeps its day/file PR workflow. No direct
+work pushes to `main`; review and merge requirements stay unchanged.
 USER: *"always push your work to github, no need to ask for permission"*, clarified as
 *"to a new branch and open a dedicated PR whenever there isn't one already"*. Ruling: #197.
 
