@@ -31,14 +31,45 @@ session; the machinery behind them, needed only when something misbehaves, lives
    there and not here because this repo is public and the repos you work in need not be, and the
    sweep is seeded beside it because that is the file it reads.
 3) Integrate it to your model provider, adding the `memory` and `desire` repos alongside your work.
-   Interactive sessions load 🌤️ Daylight through `CLAUDE.md`; schedule the other two as routines
-   whose whole prompt is `Follow <you>/desire/BIRDSONG.md` (before your day) and
-   `Follow <you>/desire/EVENING.md` (overnight).
+   Use the [Amp setup](#amp) below, or Claude Code's `CLAUDE.md` entry point. Configure scheduled
+   runs separately with `Follow <path-to-desire>/BIRDSONG.md` (before your day) and
+   `Follow <path-to-desire>/EVENING.md` (overnight), also loading the operating rules and memory.
+   Moving the files to another harness does not migrate the schedules; check their timezone and
+   access to every configured repo there.
 
 Nothing in this repo names you: your login, your agent's, and the repos you work in are all in that
 one `config.env`, in the repo that is yours. What is here is only the rules.
 
 **Pro tip:** Ask your 🌤️ Daylight session for its password to check it actually loaded the prompt.
+
+## Amp
+
+Amp loads `AGENTS.md`, using `CLAUDE.md` only as a fallback when the former is absent. It does not
+discover guidance in sibling repositories. Put a loader in Amp's global instructions so it also
+applies when the working directory is a WORK_REPO. For orbs with the clones under
+`~/workspace/repos/`, use this, adjusting the paths to your layout:
+
+```text
+Before the first response or task action, read ~/workspace/repos/desire/AGENTS.md.
+Read DAYLIGHT.md from that clone for interactive sessions, or only BIRDSONG.md or EVENING.md
+when explicitly requested. Read ~/workspace/repos/memory/AGENTS.md, config.env and README.md,
+and the work notes needed for the task. If any required file is unavailable, say so.
+```
+
+The loader chooses the phase at runtime: do not unconditionally import Daylight into `AGENTS.md`,
+which scheduled sessions also read. Amp supports `@` references in guidance, but `CLAUDE.md`'s
+imports are not added when `AGENTS.md` takes precedence. Never place private config values in
+public guidance.
+
+Skills in the sibling clones need discovery too. Add their `.agents/skills/` directories to
+`amp.skills.path` and reload skills, or install them as personal/workspace skills. Confirm the
+expected names appear in the session's skill list. A script such as the sweep can instead be run
+by its explicit path; a linked skill can be read explicitly if it is not registered.
+
+Use Amp's orb setup mechanism for dependency installation; `.claude/` startup hooks and permission
+denies are Claude Code-specific. Follow [Identity and signing](OPERATIONS.md#identity-and-signing)
+for authorship without replacing Amp's managed signer, and
+[Watching a pull request](OPERATIONS.md#watching-a-pull-request) for event delivery.
 
 ## Keep Codex pull requests listening
 
@@ -49,9 +80,9 @@ is idle, and deletes itself when the pull request merges or closes. No setup.
 ## Verified commits
 
 **Optional** — everything above works without this. What it buys: every commit the agents push
-is authored by `AGENT` rather than a default identity, and signed so it shows the **Verified**
-badge — one glance tells a real agent commit from anything else. The SessionStart hook does
-both; wiring it up, on Claude Code on the web:
+is signed so it shows the **Verified** badge. Authorship is required independently of signing.
+Amp uses its managed signer; the setup below is only for Claude Code on the web, where the
+SessionStart hook handles both:
 
 1) Generate a passphrase-free SSH key: `ssh-keygen -t ed25519 -f ~/.ssh/agents_signing -N ''` —
    under `~/.ssh`, never in a checkout, where a broad `git add` could commit it.
