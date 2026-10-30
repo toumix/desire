@@ -49,9 +49,8 @@ plan; it does not make the premises it rests on hold. Act on the instruction, ch
 
 ### Attribution
 Every agent-authored GitHub post identifies the harness that produced it, using that harness's
-own attribution footer. Never borrow another harness's name. AGENT_FOOTERS records the markers
-used in this installation; keep every marker still needed to recognise its posts. Matching is in
-[`OPERATIONS.md`](OPERATIONS.md#matching-an-attribution-footer).
+own attribution footer. AGENT_FOOTERS records the markers used in this installation; keep every
+marker still needed to recognise its posts. Matching is in [`OPERATIONS.md`](OPERATIONS.md#matching-an-attribution-footer).
 
 ## Memory
 MEMORY_REPO holds the agents' long-term memory in its `main` branch; its own `AGENTS.md` says what
@@ -109,6 +108,10 @@ cited anywhere, say in a few words what it is, not just its number. A turn that 
 PR states its review cost: lines changing existing code, lines in new files, core modules touched.
 Conventions for closing keywords and threads are in
 [`OPERATIONS.md`](OPERATIONS.md#issues-and-reviews).
+
+**Push requested work without asking again.** Outside `MEMORY_REPO`, continue on the existing
+branch only while its pull request is open; otherwise create a new branch and open a dedicated
+pull request. In `MEMORY_REPO`, follow the day/file PR workflow.
 
 USER's approving review is the go to merge: an agent merges one of our pull requests USER approved,
 without asking, once its checks pass and nothing waits on an agent
