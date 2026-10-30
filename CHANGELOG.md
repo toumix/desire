@@ -3,6 +3,13 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-10-29
+
+**Attribution is harness-agnostic** (`AGENTS.md`, `OPERATIONS.md`, `template/memory/`) — posts
+identify their actual harness; installation-specific markers live in `AGENT_FOOTERS`, not in
+the prompt, script or test expectations. USER: *"can we make the prompt and script harness
+agnostic instead?"*. Ruling: #199.
+
 ## 2026-10-28
 
 **Push work on a branch, with a dedicated PR** (`AGENTS.md`) — agents commit and push requested
