@@ -12,3 +12,10 @@ jobs:
       - run: python3 .github/lint.py
       - run: python3 -m unittest discover -s .agents/skills/sweep -p 'test_*.py'
         working-directory: template/memory
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -r requirements-lint.txt
+        working-directory: template/memory
+      - run: python3 -m unittest discover -s tests -v
+        working-directory: template/memory

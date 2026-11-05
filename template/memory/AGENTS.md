@@ -16,3 +16,6 @@ What is where:
 - [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) — the shape of the day
   PR's description.
 - The open issues — what waits on USER, labelled `yours` or `waiting`.
+
+Run `python scripts/lint_memory.py` for the automated memory checks; setup,
+rule coverage and optional GitHub/link audits are in [`docs/lint.md`](docs/lint.md).
