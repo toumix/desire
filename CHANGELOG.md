@@ -5,6 +5,17 @@ Entries state the changes, no explanation of why.
 
 ## 2026-11-10
 
+**An absolute rule carries its exception; a stale caution is deleted; spawn sets the effort**
+(`AGENTS.md`, `BIRDSONG.md`, `.claude/skills/spawn/`) — an agent closes a `yours` issue only on
+USER's word, and schedules a timed PR check-in only when USER asks for one. 🐦 Birdsong checks each
+caution the board or a `WORK/` note carries against its reason, and deletes it once that reason no
+longer holds. A spawned session gets an effort level on the call that creates it, when USER names
+one; a child stops on a refused attach or register and retries a clone or a call that fails on the
+network. Replaces: "never closes a `yours` one"; "Never schedule timed PR check-ins"; "A session
+is created with a model and no effort level"; a child stopping, with no retry, on any failed
+attach, clone or register. USER: *"1 2 let's go"*, *"yeah soften the nevers"*, *"same i trust you
+on this one"*. Ruling: #213.
+
 **Next repos are measured by quality; idle runs say so; an open ask is hands off** (`AGENTS.md`,
 `OPERATIONS.md`, `template/memory/.agents/skills/sweep/`) — the agents' work on a next repo is
 measured by the library's quality, drift stays a nightly reading. A scheduled run that finds

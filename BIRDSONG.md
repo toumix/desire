@@ -19,6 +19,8 @@ these steps in order:
    proposes, with what each costs to read, go under `Agent proposals`.
 6. **Review** the open issues and pull requests, in WORK_REPOS and DESIRE_REPO, and plan the day.
 7. **Update the board**: what collides with what and what merge order is forced, nothing else.
+   A caution the board or a `WORK/` note carries (hands off, blocked, waits on) is checked against
+   its reason, and deleted once that reason no longer holds.
 8. **Write the day PR's description**, the only routine that does, to the shape in MEMORY_REPO's
    `.github/PULL_REQUEST_TEMPLATE.md` ([public copy](template/memory/.github/PULL_REQUEST_TEMPLATE.md)).
    Keep it as short as the day can be said: an honest activity account that answers "did Evening

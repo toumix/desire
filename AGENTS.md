@@ -66,7 +66,7 @@ What waits on USER is an open issue on MEMORY_REPO, one per thing, its title nam
 answering unblocks, labelled `yours` when only
 USER can do it, `waiting` when it is one react, one merge or one word. The point is also asked on
 its own pull request the same turn, and the issue links that comment. An agent closes a `waiting`
-issue on evidence, linking it, and never closes a `yours` one.
+issue on evidence, linking it, and closes a `yours` one only on USER's word.
 
 One pull request per day on MEMORY_REPO, titled with the day, ready for review, carries the day's
 file changes. A turn that does work or receives a new durable directive pushes its memory changes
@@ -127,8 +127,8 @@ without asking, once its checks pass and nothing waits on an agent
 ([`OPERATIONS.md`](OPERATIONS.md#merging-on-approval)).
 
 Watch a PR through an active event subscription where available; capability alone is not delivery.
-Never schedule timed PR check-ins. If event delivery is unavailable, report it; follow-up needs
-a new turn. Setup details are in [`OPERATIONS.md`](OPERATIONS.md#watching-a-pull-request).
+Schedule a timed PR check-in only when USER asks for one. If event delivery is unavailable, report
+it; follow-up needs a new turn. Setup details are in [`OPERATIONS.md`](OPERATIONS.md#watching-a-pull-request).
 
 Every write to GitHub goes through the MCP tools, as AGENT; commits carry AGENT and AGENT_EMAIL.
 How to check both, and commit signing, are in

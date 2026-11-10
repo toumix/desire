@@ -35,8 +35,8 @@ and no skills: it reads as confused, and what it posts follows no rule.
   3. register each clone, so its instructions and skills load on the next turn;
   4. in the MEMORY_REPO clone, read `config.env`, the board and the task's `WORK/` notes, and
      check out the day PR's branch there; a work repo gets its own branch and pull request;
-  5. **if an attach, a clone or a register fails, stop and message the parent**: no workaround,
-     no retry;
+  5. **if an attach or a register is refused, stop and message the parent**: no workaround, no
+     retry. A clone or a call that fails on the network is retried;
   6. when every repo is attached and registered, message the parent one line saying so.
 - **Quote USER asking for the session** at the top of the prompt, and say that attaching the listed
   repos is part of what USER asked for.
@@ -44,8 +44,8 @@ and no skills: it reads as confused, and what it posts follows no rule.
   a list of allowed tools. It only holds if the parent has them pre-approved too.
 - **A session is created with one repository.** Tell USER so when they ask for several loaded: the
   others arrive by the setup steps, or by USER attaching them to the child.
-- **Name what the runtime cannot set.** A session is created with a model and no effort level:
-  say to USER that the effort is only a line of the prompt.
+- **Set the effort only when USER names a level**, on the call that creates the session where it
+  takes one. Where it takes none, say to USER that the effort is only a line of the prompt.
 - **Ask for the report as a message to the parent** when the task ends or blocks. A child that
   finishes cleanly reports nothing by itself.
 - One spawn is one task. Children that write the same file (the board, a `WORK/` note) are told
