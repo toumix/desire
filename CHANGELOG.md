@@ -3,6 +3,12 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-11-12
+
+**`post-check --range` scans the lines each commit adds** (`.agents/skills/post-check/`) — a
+private repo name or a denylist hit in a file a commit adds is a finding, as in its message.
+Replaces: commit messages only. USER: 🚀 on #215.
+
 ## 2026-11-10
 
 **An absolute rule carries its exception; a stale caution is deleted; spawn sets the effort**

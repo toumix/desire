@@ -230,6 +230,27 @@ def commits(repo_dir, span):
             for entry in out.stdout.split("\x1e") if entry.strip()]
 
 
+def additions(repo_dir, span):
+    """{sha: [(path, line)]} of the lines each commit in `span` adds."""
+    out = subprocess.run(
+        ["git", "-C", repo_dir, "log", "-p", "-U0", "--no-color", "--no-renames",
+         "--no-ext-diff", "--format=%x1e%H", span],
+        capture_output=True, text=True, errors="replace", check=False)
+    if out.returncode:
+        raise Unread((out.stderr.strip().splitlines() or ["git"])[0])
+    added = {}
+    for entry in out.stdout.split("\x1e")[1:]:
+        sha, *patch = entry.splitlines()
+        path, lines, before = None, added.setdefault(sha, []), ""
+        for line in patch:
+            if line.startswith("+++ ") and before.startswith("--- "):
+                path = line[6:] if line.startswith("+++ b/") else None
+            elif line.startswith("+") and path:
+                lines.append((path, line[1:]))
+            before = line
+    return added
+
+
 def identity(entries, setup, signed):
     """(findings, notes) on the author and signature of each commit."""
     found, unsigned = [], []
@@ -270,19 +291,30 @@ def compare(linked, named):
                for k in sorted(named - linked)])
 
 
-def public_scan(args, setup, lines, entries):
-    """(findings, complete) for private repos and denylist hits, code included."""
+def public_scan(args, setup, lines, entries, added=None):
+    """(findings, complete) for private repos and denylist hits, code included,
+    in the body, the commit messages and the lines each commit adds."""
     try:
         patterns = denylist(args.denylist) if args.denylist else []
     except (OSError, UnicodeError, re.error) as error:
         print(f"denylist: n/a ({error})")
         return [], False
-    texts = [lines] + [entry[4].splitlines() for entry in entries]
+    names = [repo.split("/")[-1].lower() for repo in
+             {*setup["WORK_REPOS"], setup.get("MEMORY_REPO", "")} - {""}]
+    added = {sha: [(path, line) for path, line in diff
+                   if any(name in line.lower() for name in names)
+                   or any(rule.search(line) for rule in patterns)]
+             for sha, diff in (added or {}).items()}
+    texts = [lines] + [entry[4].splitlines() for entry in entries] + [
+        [line for _, line in diff] for diff in added.values()]
     visibility = mentioned(texts, setup, args.target, args.public)
     found = leaks(lines, "body", visibility, patterns)
     for sha, *_, message in entries:
         found += leaks(message.splitlines(), f"commit {sha[:7]}", visibility,
                        patterns)
+        for path, line in added.get(sha, []):
+            found += [hit.replace(" line 1:", f" adds to {path}:", 1) for hit in
+                      leaks([line], f"commit {sha[:7]}", visibility, patterns)]
     return found, True
 
 
@@ -310,19 +342,20 @@ def check(args, setup, text):
     shown = {True: "public", False: "private"}.get(public)
     print(f"target: {args.target} "
           f"{shown or f'unreadable ({public}), treated as public'}")
-    entries = []
+    entries, added = [], {}
     if args.range:
         try:
             if not (setup.get("AGENT") and setup.get("AGENT_EMAIL")):
                 raise Unread("AGENT or AGENT_EMAIL is not in config.env")
             entries = commits(args.repo_dir, args.range)
+            added = additions(args.repo_dir, args.range)
         except Unread as error:
             print(f"commits: n/a ({error})")
             complete = False
         found, more = identity(entries, setup, args.signed)
         findings, notes = findings + found, notes + more
     raw = text.splitlines()
-    steps = [public_scan(args, setup, raw, entries)] if public is not False else []
+    steps = [public_scan(args, setup, raw, entries, added)] if public is not False else []
     steps += [verify(args, keys)] if args.verify_closes else []
     for found, done in steps:
         findings, complete = findings + found, complete and done
