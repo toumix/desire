@@ -65,19 +65,32 @@ def holds(pull, files):
     return bool(HOLD.search((pull.get("body") or "") + "\n" + added))
 
 
+def last_push(commit, runs, events):
+    """When the head reached the pull request, as near as GitHub says: the
+    latest of its commit date, the first check run on it and the last
+    force-push."""
+    times = [commit["commit"]["committer"]["date"]]
+    starts = [run["started_at"] for run in runs if run.get("started_at")]
+    times += [min(starts, key=when)] if starts else []
+    times += [e["created_at"] for e in events
+              if e.get("event") == "head_ref_force_pushed"]
+    return max(map(when, times))
+
+
 def unanswered(comments, pushed, setup):
-    """Logins, bots apart, who commented after the last push and after the
-    agent's last comment."""
-    logins = []
+    """Logins of the people, bots and the agent apart, who commented after
+    the last push; the agent is AGENT, or USER's account with a footer."""
+    logins = set()
     for comment in comments:
         user = comment.get("user") or {}
-        agent = user.get("login") == setup["AGENT"] or pr_status.agent_footer(
-            comment.get("body"), setup)
-        if agent:
-            logins = []
-        elif user.get("type") != "Bot" and when(comment["created_at"]) > pushed:
-            logins.append(user.get("login"))
-    return sorted(set(logins))
+        login = user.get("login")
+        agent = login == setup["AGENT"] or (
+            login == setup["USER"]
+            and pr_status.agent_footer(comment.get("body"), setup))
+        if (not agent and user.get("type") != "Bot"
+                and when(comment["created_at"]) > pushed):
+            logins.add(login)
+    return sorted(logins)
 
 
 def verdict(s, quiet):
@@ -128,8 +141,8 @@ def measure(repo, pull, owned, default, setup, now, wait=time.sleep):
         return s
     full = pr_status.mergeable(repo, number, wait)
     runs = pr_status.get(repo, f"commits/{sha}/check-runs", "check_runs")
-    commit = pr_status.get(repo, f"commits/{sha}")
-    pushed = when(commit["commit"]["committer"]["date"])
+    pushed = last_push(pr_status.get(repo, f"commits/{sha}"), runs,
+                       pr_status.get(repo, f"issues/{number}/timeline"))
     s.update(
         draft=full["draft"], mergeable=full.get("mergeable"),
         base=full["base"]["ref"], default=default, ran=bool(runs),
