@@ -37,7 +37,13 @@ def folder(repo, login, default, path=FOLDERS):
     body = pr_status.get(repo, f"contents/{path}?ref={default}")
     if body is None:
         raise pr_status.Unread(f"no {path}")
-    return json.loads(base64.b64decode(body["content"])).get(login)
+    try:
+        owners = json.loads(base64.b64decode(body["content"]))
+    except (KeyError, TypeError, ValueError):
+        owners = None
+    if not isinstance(owners, dict):
+        raise pr_status.Unread(f"{path} is not a map of logins")
+    return owners.get(login)
 
 
 def outside(files, owned):
@@ -49,7 +55,8 @@ def outside(files, owned):
 
 def approved(reviews):
     """Whether some reviewer's latest deciding review approves and none asks
-    for changes."""
+    for changes, on any commit: the App approves once and keeps it across
+    pushes, and `outside` re-reads the paths of the head."""
     latest = {}
     for review in reviews:
         if review["state"] in ("APPROVED", "CHANGES_REQUESTED", "DISMISSED"):

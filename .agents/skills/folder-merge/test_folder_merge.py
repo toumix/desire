@@ -276,6 +276,17 @@ class Sweep(unittest.TestCase):
             rows = folder_merge.sweep(REPO, SETUP, NOW, 24)
         self.assertEqual([s["verdict"] for s in rows], ["outside", "n/a"])
 
+    def test_a_map_that_is_not_one_is_a_failed_read(self):
+        for content in (b"[1, 2]", b"{not json", b'"me"'):
+            body = {"content": base64.b64encode(content).decode()}
+            with self.subTest(content), mock.patch.object(
+                    pr_status, "get", return_value=body):
+                with self.assertRaises(pr_status.Unread):
+                    folder_merge.folder(REPO, "human-agents", "main")
+        with mock.patch.object(pr_status, "get", return_value={}):
+            with self.assertRaises(pr_status.Unread):
+                folder_merge.folder(REPO, "human-agents", "main")
+
     def test_an_agent_with_no_folder_is_a_failed_read(self):
         empty = base64.b64encode(b"{}").decode()
         with mock.patch.object(pr_status, "get", return_value={
