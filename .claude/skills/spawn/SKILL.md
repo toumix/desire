@@ -20,9 +20,9 @@ and no skills: it reads as confused, and what it posts follows no rule.
 3. **List the repos the task reads and writes**, DESIRE_REPO and MEMORY_REPO always among them.
    Check each is attached to this session: a repo the parent cannot reach, the child will not
    reach either.
-4. **Check each repo's owner is one the environment trusts**
-   ([README](../../../README.md#spawned-sessions)). For an owner it does not name, tell USER
-   before spawning: the child's attach will be refused until USER adds the owner, or types
+4. **Check the environment lets a child attach repos**
+   ([README](../../../README.md#spawned-sessions)). Where its startup script lacks that line,
+   tell USER before spawning: the child's attach will be refused until USER adds it, or types
    "attach it" in the child.
 
 ## Spawning
@@ -44,11 +44,11 @@ and no skills: it reads as confused, and what it posts follows no rule.
   6. when every repo is attached and registered, message the parent one line saying so.
 - **Quote USER asking for the session** at the top of the prompt, and say that attaching the listed
   repos is part of what USER asked for.
-- **A child attaches only repos of an owner its environment trusts.** Its auto mode trusts the
+- **A child attaches a repo only where its environment says so.** Its auto mode trusts the
   source repo alone, and refuses the attach of any other, unless the environment's startup script
-  names the repo's owner ([README](../../../README.md#spawned-sessions)). A permission rule in a
-  repo's settings file and a list of allowed tools on the call that creates the session change
-  nothing. Spawn in an environment that has those lines.
+  says attaching is expected setup ([README](../../../README.md#spawned-sessions)). A permission
+  rule in a repo's settings file and a list of allowed tools on the call that creates the session
+  change nothing. Spawn in an environment that has that line.
 - **A session is created with one repository.** Tell USER so when they ask for several loaded: the
   others arrive by the setup steps, or by USER attaching them to the child.
 - **Set the effort only when USER names a level**, on the call that creates the session where it
