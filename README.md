@@ -98,3 +98,27 @@ cat > /home/user/.claude/settings.json <<'EOF'
 {"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"/home/user/memory/.claude/hooks/session-start.sh"}]}]}}
 EOF
 ```
+
+## Spawned sessions
+
+**Optional**, for Claude Code on the web: what lets a session started by an agent attach your
+other repos with nobody typing in it. A session's auto mode trusts the repo it started in and
+nothing else, so a child spawned from this repo is refused when it attaches MEMORY_REPO or a work
+repo, until you say so inside it. The trusted owners are read from the user-level settings file,
+`/root/.claude/settings.json` in the container, and from no file in a repo. Add this to the
+environment's startup script, with every GitHub owner your agents work under:
+
+```sh
+mkdir -p /root/.claude
+cat > /root/.claude/settings.json <<'EOF'
+{"autoMode": {"environment": [
+  "$defaults",
+  "Source control: github.com/<you> and github.com/<your-org>, and all repos under them,",
+  "are the user's own trusted orgs.",
+  "Attaching a repo of those orgs to the session with add_repo, read or push, is expected setup."
+]}}
+EOF
+```
+
+It applies to sessions started after the change. The SessionStart hook merges its own entries
+into the same file and keeps these.

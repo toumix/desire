@@ -3,6 +3,18 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-11-13
+
+**A spawned child attaches repos of the owners its environment trusts** (`.claude/skills/spawn/`,
+`README.md`) — the environment's startup script writes `autoMode.environment` to the user-level
+settings file, naming the GitHub owners whose repos a session may attach; the `spawn` skill checks
+each repo's owner against it before spawning. Four children on an environment without those lines
+were refused a push attach; a child on the same environment with them attached two. A `permissions.allow`
+rule in `.claude/settings.json` changed nothing, and USER deleted the file. Replaces: "Pre-approve
+the attach and register tools for the child". USER: *"dammit i thought i solved that problem by
+adding settings in the desire repo, spawn a third session to help me fix it for good"*. Ruling:
+#216.
+
 ## 2026-11-10
 
 **An absolute rule carries its exception; a stale caution is deleted; spawn sets the effort**
