@@ -8,13 +8,15 @@ Entries state the changes, no explanation of why.
 **A spawned child attaches repos where its environment says attaching is expected**
 (`.claude/skills/spawn/`, `README.md`) — the environment's startup script writes
 `autoMode.environment` to the user-level settings file, with one line that names no repo and no
-owner; the `spawn` skill checks for it before spawning. Four children on an environment without
+owner, in the same file that wires the SessionStart hook; the `spawn` skill checks for it before
+spawning. Four children on an environment without
 the line were refused a push attach; a child on an environment with it attached two. A
 `permissions.allow` rule in `.claude/settings.json` changed nothing, and USER deleted the file.
-Replaces: "Pre-approve the attach and register tools for the child". USER: *"dammit i thought i
+Replaces: "Pre-approve the attach and register tools for the child"; the startup script writing
+`/home/user/.claude/settings.json`. USER: *"dammit i thought i
 solved that problem by adding settings in the desire repo, spawn a third session to help me fix
 it for good"*, *"i don't want the desire readme to have my list of repos explicitly added"*,
-*"attaching a repo could be allowed by default?"*. Ruling: #216.
+*"attaching a repo could be allowed by default?"*, *"why do we need two scripts? merge them"*. Ruling: #216.
 
 ## 2026-11-10
 

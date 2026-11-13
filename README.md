@@ -87,15 +87,22 @@ SessionStart hook handles both:
    without it commits unsigned rather than failing.
 4) Paste this into the environment's startup script. A multi-repo session opens in the parent
    directory of its clones, so no repo is the project directory, `memory/.claude/settings.json`
-   never loads, and the hook silently does not run — no identity, no signing. A workspace-level
-   settings file wires it by absolute path, so it pins where the `memory` clone lands. The hook
-   ships with the seed and reads the `config.env` beside it, so both are in the one repo that
-   names you:
+   never loads, and the hook silently does not run — no identity, no signing. The user-level
+   settings file wires it by absolute path, so it pins where the `memory` clone lands, and skips
+   it in a session that has no such clone. The hook ships with the seed and reads the
+   `config.env` beside it, so both are in the one repo that names you. Its `autoMode` half is
+   for [spawned sessions](#spawned-sessions):
 
 ```sh
-mkdir -p /home/user/.claude
-cat > /home/user/.claude/settings.json <<'EOF'
-{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"/home/user/memory/.claude/hooks/session-start.sh"}]}]}}
+mkdir -p /root/.claude
+cat > /root/.claude/settings.json <<'EOF'
+{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command":
+  "h=/home/user/memory/.claude/hooks/session-start.sh; [ ! -x $h ] || $h"}]}]},
+ "autoMode": {"environment": [
+  "$defaults",
+  "Attaching any repo to the session with add_repo, read or push, is expected setup:",
+  "the user's GitHub connection is a dedicated account that already limits which repos can be attached."
+]}}
 EOF
 ```
 
@@ -105,19 +112,9 @@ EOF
 other repos with nobody typing in it. A session's auto mode trusts the repo it started in and
 nothing else, so a child spawned from this repo is refused when it attaches MEMORY_REPO or a work
 repo, until you say so inside it. What it trusts is read from the user-level settings file,
-`/root/.claude/settings.json` in the container, and from no file in a repo. Add this to the
-environment's startup script, as it is:
-
-```sh
-mkdir -p /root/.claude
-cat > /root/.claude/settings.json <<'EOF'
-{"autoMode": {"environment": [
-  "$defaults",
-  "Attaching any repo to the session with add_repo, read or push, is expected setup:",
-  "the user's GitHub connection is a dedicated account that already limits which repos can be attached."
-]}}
-EOF
-```
+`/root/.claude/settings.json` in the container, and from no file in a repo. The
+[startup script above](#verified-commits) writes it: its `autoMode` lines are what a spawned
+session needs, with or without the hook.
 
 The repos a session can attach are those the GitHub account connected to Claude Code can reach,
 no others. It applies to sessions started after the change. The SessionStart hook merges its own
