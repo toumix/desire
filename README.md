@@ -116,6 +116,7 @@ repo, until you say so inside it. What it trusts is read from the user-level set
 [startup script above](#verified-commits) writes it: its `autoMode` lines are what a spawned
 session needs, with or without the hook.
 
-The repos a session can attach are those the GitHub account connected to Claude Code can reach,
-no others. It applies to sessions started after the change. The SessionStart hook merges its own
+The repos a session can attach are whatever the GitHub account connected to Claude Code can
+reach: check that account's access before pasting the line, which says it is a dedicated one. It
+applies to sessions started after the change. The SessionStart hook merges its own
 entries into the same file and keeps these.
