@@ -47,7 +47,7 @@ def folder(repo, login, default, path=FOLDERS):
 
 
 def outside(files, owned):
-    """The changed paths, both sides of a rename, not under content/<owned>/."""
+    """The changed paths, either side of a rename, outside content/<owned>/."""
     paths = [p for f in files for p in (
         f["filename"], f.get("previous_filename")) if p]
     return sorted(p for p in paths if not p.startswith(f"content/{owned}/"))
@@ -84,18 +84,21 @@ def last_push(commit, runs, events):
     return max(map(when, times))
 
 
-def unanswered(comments, pushed, setup):
-    """Logins of the people, bots and the agent apart, who commented after
-    the last push; the agent is AGENT, or USER's account with a footer."""
+def unanswered(comments, reviews, pushed, setup):
+    """Logins of the people, bots and the agent apart, who wrote a comment
+    or a review with a body after the last push; the agent is AGENT, or
+    USER's account with a footer."""
+    said = [(c, c["created_at"]) for c in comments] + [
+        (r, r["submitted_at"]) for r in reviews
+        if r.get("body") and r.get("submitted_at")]
     logins = set()
-    for comment in comments:
-        user = comment.get("user") or {}
+    for post, stamp in said:
+        user = post.get("user") or {}
         login = user.get("login")
         agent = login == setup["AGENT"] or (
             login == setup["USER"]
-            and pr_status.agent_footer(comment.get("body"), setup))
-        if (not agent and user.get("type") != "Bot"
-                and when(comment["created_at"]) > pushed):
+            and pr_status.agent_footer(post.get("body"), setup))
+        if not agent and user.get("type") != "Bot" and when(stamp) > pushed:
             logins.add(login)
     return sorted(logins)
 
@@ -137,7 +140,7 @@ def verdict(s, quiet):
 
 
 def measure(repo, pull, owned, default, setup, now, wait=time.sleep):
-    """One pull request's fields; its paths alone when one leaves the folder."""
+    """One pull request's fields; its paths alone when one is outside."""
     number, sha = pull["number"], pull["head"]["sha"]
     s = {"pr": f"{repo}#{number}", "sha": sha, "title": pull["title"],
          "branch": pull["head"]["ref"]}
@@ -150,6 +153,7 @@ def measure(repo, pull, owned, default, setup, now, wait=time.sleep):
     runs = pr_status.get(repo, f"commits/{sha}/check-runs", "check_runs")
     pushed = last_push(pr_status.get(repo, f"commits/{sha}"), runs,
                        pr_status.get(repo, f"issues/{number}/timeline"))
+    reviews = pr_status.get(repo, f"pulls/{number}/reviews")
     s.update(
         draft=full["draft"], mergeable=full.get("mergeable"),
         base=full["base"]["ref"], default=default, ran=bool(runs),
@@ -157,12 +161,13 @@ def measure(repo, pull, owned, default, setup, now, wait=time.sleep):
             runs, pr_status.expected(repo, full["base"]["ref"]), now),
         threads=pr_status.split_threads(
             pr_status.threads(repo, number), setup),
-        approved=approved(pr_status.get(repo, f"pulls/{number}/reviews")),
+        approved=approved(reviews),
         hours=int((now - pushed).total_seconds() // 3600),
         hold=holds(full, files),
         boxes=len(OPEN_BOX.findall(full.get("body") or "")),
         unanswered=unanswered(
-            pr_status.get(repo, f"issues/{number}/comments"), pushed, setup))
+            pr_status.get(repo, f"issues/{number}/comments"), reviews,
+            pushed, setup))
     return s
 
 
