@@ -25,7 +25,7 @@ Exit 0 when none says `ask` or `blocked`, 1 when one does, 2 when a read failed 
 | `outside` | a changed path, either side of a rename, is not under the folder | nothing: it waits on USER's approving review |
 | `active` | the last push is under `--quiet` hours old, 24 by default | nothing, and no question |
 | `blocked` | the base is not the default branch; a conflict; a check failed, pending or never ran; a thread waits on an agent; no approval | fix it, below |
-| `ask` | the body or an added line says "not to merge automatically"; an open checkbox in the body; a thread waits on USER; a person commented, or reviewed with words, after the last push; `mergeable` unknown | ask USER, below |
+| `ask` | the body or an added line says not to merge ("not to merge automatically", "do not merge"); an open checkbox in the body; a thread waits on USER; a person commented, or reviewed with words, after the last push; `mergeable` unknown | ask USER, below |
 | `merge` | none of these: a draft does not hold it | merge it, below |
 
 The last push is the latest of the head commit's date, the first check run on it and the last

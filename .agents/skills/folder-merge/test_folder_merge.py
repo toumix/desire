@@ -87,6 +87,23 @@ class Holds(unittest.TestCase):
         files = [{"patch": "@@\n+This page is not to be merged automatically"}]
         self.assertTrue(folder_merge.holds({"body": None}, files))
 
+    def test_other_wordings_hold_too(self):
+        for words in ("Do not merge.", "don't merge yet", "DO NOT MERGE",
+                      "not merged before a read", "not to be merged",
+                      "not merged automatically", "never merge this"):
+            with self.subTest(words):
+                self.assertTrue(folder_merge.holds({"body": words}, []))
+
+    def test_words_about_something_else_do_not(self):
+        for words in ("merged main, nothing else", "notable merge",
+                      "the page of #1 (on its branch, not merged)"):
+            with self.subTest(words):
+                self.assertFalse(folder_merge.holds({"body": words}, []))
+
+    def test_every_list_marker_opens_a_box(self):
+        body = "- [ ] a\n* [ ] b\n+ [ ] c\n  1. [ ] d\n- [x] done\n[ ] bare"
+        self.assertEqual(len(folder_merge.OPEN_BOX.findall(body)), 4)
+
     def test_a_removed_line_does_not(self):
         files = [{"patch": "@@\n-not to merge automatically\n+fine"}]
         self.assertFalse(folder_merge.holds({"body": ""}, files))
@@ -222,7 +239,7 @@ class Verdict(unittest.TestCase):
 
     def test_each_doubt_asks(self):
         for fields, reason in [
-                ({"hold": True}, "says not to merge automatically"),
+                ({"hold": True}, "says not to merge"),
                 ({"boxes": 2}, "2 open box(es) in the body"),
                 ({"threads": ([], ["u"])}, "1 thread(s) on USER"),
                 ({"unanswered": ["other"]}, "comment by other after the push"),

@@ -22,8 +22,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent
 import pr_status  # noqa: E402  pylint: disable=wrong-import-position
 
 FOLDERS = ".github/personal-folders.json"
-HOLD = re.compile(r"not (to (be )?merged?|merge) automatically", re.I)
-OPEN_BOX = re.compile(r"^\s*[-*] \[ \]", re.M)
+HOLD = re.compile(
+    r"\bnot to (be )?merged?\b|\b(do not|don't|never) merge\b"
+    r"|\bnot (be )?merged? (automatically|before|until)\b", re.I)
+OPEN_BOX = re.compile(r"^\s*([-*+]|\d+[.)]) \[ \]", re.M)
 ADDED = re.compile(r"^\+(?!\+\+)(.*)$", re.M)
 
 
@@ -66,7 +68,7 @@ def approved(reviews):
 
 
 def holds(pull, files):
-    """Whether the body or an added line says not to merge automatically."""
+    """Whether the body or an added line says not to merge."""
     added = "\n".join(line for f in files
                       for line in ADDED.findall(f.get("patch") or ""))
     return bool(HOLD.search((pull.get("body") or "") + "\n" + added))
@@ -127,7 +129,7 @@ def verdict(s, quiet):
         return "blocked", blocked
     ask = []
     if s["hold"]:
-        ask.append("says not to merge automatically")
+        ask.append("says not to merge")
     if s["boxes"]:
         ask.append(f"{s['boxes']} open box(es) in the body")
     if s["threads"][1]:
