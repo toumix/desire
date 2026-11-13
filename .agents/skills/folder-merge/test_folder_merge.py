@@ -242,7 +242,7 @@ class Verdict(unittest.TestCase):
                 ({"hold": True}, "says not to merge"),
                 ({"boxes": 2}, "2 open box(es) in the body"),
                 ({"threads": ([], ["u"])}, "1 thread(s) on USER"),
-                ({"unanswered": ["other"]}, "comment by other after the push"),
+                ({"unanswered": ["other"]}, "comment by other after the head"),
                 ({"mergeable": None}, "mergeable unknown")]:
             with self.subTest(reason):
                 self.assertEqual(folder_merge.verdict(status(**fields), 24),
@@ -261,6 +261,38 @@ class Line(unittest.TestCase):
              "verdict": "outside", "outside": ["README.md", "x.py"]}
         self.assertEqual(folder_merge.line(s),
                          f"{REPO}#1 @{SHA} page -> outside (README.md (+1))")
+
+
+class Measure(unittest.TestCase):
+
+    def test_a_comment_between_the_push_and_its_first_check_is_kept(self):
+        pull = {"number": 1, "title": "t", "head": {"sha": SHA, "ref": "b"}}
+        answers = {
+            "pulls/1/files": [{"filename": "content/me/a.md"}],
+            f"commits/{SHA}/check-runs": [{
+                "id": 1, "name": "lint", "status": "completed",
+                "conclusion": "success",
+                "started_at": "2026-01-02T10:05:00Z"}],
+            f"commits/{SHA}": {"commit": {"committer": {
+                "date": "2026-01-02T10:00:00Z"}}},
+            "issues/1/timeline": [],
+            "pulls/1/reviews": [{"user": {"login": "app[bot]"},
+                                 "state": "APPROVED"}],
+            "issues/1/comments": [comment(
+                "human", "2026-01-02T10:01:00Z", "Do not merge yet")]}
+        full = {"draft": True, "mergeable": True, "base": {"ref": "main"},
+                "body": ""}
+        with mock.patch.object(
+                pr_status, "get", lambda repo, path, key=None: answers[path]
+        ), mock.patch.object(
+            pr_status, "mergeable", return_value=full), mock.patch.object(
+                pr_status, "expected", return_value=[]), mock.patch.object(
+                    pr_status, "threads", return_value=[]):
+            s = folder_merge.measure(REPO, pull, "me", "main", SETUP, NOW)
+        self.assertEqual(s["unanswered"], ["human"])
+        self.assertEqual(s["hours"], 25)
+        self.assertEqual(folder_merge.verdict(s, 24), (
+            "ask", ["comment by human after the head"]))
 
 
 class Sweep(unittest.TestCase):

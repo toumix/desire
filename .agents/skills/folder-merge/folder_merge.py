@@ -86,10 +86,11 @@ def last_push(commit, runs, events):
     return max(map(when, times))
 
 
-def unanswered(comments, reviews, pushed, setup):
+def unanswered(comments, reviews, written, setup):
     """Logins of the people, bots and the agent apart, who wrote a comment
-    or a review with a body after the last push; the agent is AGENT, or
-    USER's account with a footer."""
+    or a review with a body after the head commit was written, which no
+    later estimate of its push may hide; the agent is AGENT, or USER's
+    account with a footer."""
     said = [(c, c["created_at"]) for c in comments] + [
         (r, r["submitted_at"]) for r in reviews
         if r.get("body") and r.get("submitted_at")]
@@ -100,7 +101,7 @@ def unanswered(comments, reviews, pushed, setup):
         agent = login == setup["AGENT"] or (
             login == setup["USER"]
             and pr_status.agent_footer(post.get("body"), setup))
-        if not agent and user.get("type") != "Bot" and when(stamp) > pushed:
+        if not agent and user.get("type") != "Bot" and when(stamp) > written:
             logins.add(login)
     return sorted(logins)
 
@@ -135,7 +136,7 @@ def verdict(s, quiet):
     if s["threads"][1]:
         ask.append(f"{len(s['threads'][1])} thread(s) on USER")
     if s["unanswered"]:
-        ask.append(f"comment by {', '.join(s['unanswered'])} after the push")
+        ask.append(f"comment by {', '.join(s['unanswered'])} after the head")
     if s["mergeable"] is None:
         ask.append("mergeable unknown")
     return ("ask", ask) if ask else ("merge", [])
@@ -153,7 +154,8 @@ def measure(repo, pull, owned, default, setup, now, wait=time.sleep):
         return s
     full = pr_status.mergeable(repo, number, wait)
     runs = pr_status.get(repo, f"commits/{sha}/check-runs", "check_runs")
-    pushed = last_push(pr_status.get(repo, f"commits/{sha}"), runs,
+    commit = pr_status.get(repo, f"commits/{sha}")
+    pushed = last_push(commit, runs,
                        pr_status.get(repo, f"issues/{number}/timeline"))
     reviews = pr_status.get(repo, f"pulls/{number}/reviews")
     s.update(
@@ -169,7 +171,7 @@ def measure(repo, pull, owned, default, setup, now, wait=time.sleep):
         boxes=len(OPEN_BOX.findall(full.get("body") or "")),
         unanswered=unanswered(
             pr_status.get(repo, f"issues/{number}/comments"), reviews,
-            pushed, setup))
+            when(commit["commit"]["committer"]["date"]), setup))
     return s
 
 
