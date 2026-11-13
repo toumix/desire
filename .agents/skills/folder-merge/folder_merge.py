@@ -88,10 +88,10 @@ def last_push(commit, runs, events):
 
 def unanswered(comments, reviews, written, setup):
     """Logins of the people, bots and the agent apart, who wrote a comment
-    or a review with a body after the head commit was written, which no
-    later estimate of its push may hide; the agent is AGENT, or USER's
-    account with a footer."""
-    said = [(c, c["created_at"]) for c in comments] + [
+    or a review with a body after the head commit was written, or edited
+    one since, which no later estimate of its push may hide; the agent is
+    AGENT, or USER's account with a footer."""
+    said = [(c, c.get("updated_at") or c["created_at"]) for c in comments] + [
         (r, r["submitted_at"]) for r in reviews
         if r.get("body") and r.get("submitted_at")]
     logins = set()

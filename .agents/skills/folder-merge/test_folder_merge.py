@@ -155,6 +155,12 @@ class Unanswered(unittest.TestCase):
             [comment("human", "2026-01-02T05:00:00Z")], [], self.pushed, SETUP)
         self.assertEqual(found, [])
 
+    def test_an_older_comment_edited_after_it_counts(self):
+        edited = {**comment("human", "2026-01-02T05:00:00Z", "Do not merge"),
+                  "updated_at": "2026-01-02T07:00:00Z"}
+        found = folder_merge.unanswered([edited], [], self.pushed, SETUP)
+        self.assertEqual(found, ["human"])
+
     def test_the_agent_answering_does_not_clear_it(self):
         found = folder_merge.unanswered([
             comment("other", "2026-01-02T07:00:00Z"),
