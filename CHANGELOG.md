@@ -5,6 +5,15 @@ Entries state the changes, no explanation of why.
 
 ## 2026-11-13
 
+**The folder-merge skill** (`.agents/skills/folder-merge/`, `.claude/skills/`) — on a repo with
+personal folders, `folder_merge.py` gives each of AGENT's open pull requests one verdict: `outside`
+the folder, `active` for 24 hours after its last push, `blocked`, `ask` or `merge`. An agent marks
+a `merge` one ready and merges it, draft or not, with no review from USER; each `ask` is one
+question through the question interface. USER: *"new skill: go through the wiki PRs where I'm only
+working on personal folder, merge the ones I'm not actively working on and use the question
+interface to ask me what to do when you're not sure"*, then *"Merge it"* for a quiet draft and
+*"24 hours"* for the window. Ruling: #221.
+
 **A spawned child attaches repos where its environment says attaching is expected**
 (`.claude/skills/spawn/`, `README.md`) — the environment's startup script writes
 `autoMode.environment` to the user-level settings file, with one line that names no repo and no
