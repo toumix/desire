@@ -20,6 +20,11 @@ and no skills: it reads as confused, and what it posts follows no rule.
 3. **List the repos the task reads and writes**, DESIRE_REPO and MEMORY_REPO always among them.
    Check each is attached to this session: a repo the parent cannot reach, the child will not
    reach either.
+4. **Check the environment lets a child attach repos**
+   ([README](../../../README.md#spawned-sessions)): the user-level settings file of a session
+   started in it carries the `autoMode.environment` line. Where it does not, tell USER before
+   spawning: the child's attach will be refused until USER adds it, or types "attach it" in the
+   child.
 
 ## Spawning
 
@@ -40,8 +45,11 @@ and no skills: it reads as confused, and what it posts follows no rule.
   6. when every repo is attached and registered, message the parent one line saying so.
 - **Quote USER asking for the session** at the top of the prompt, and say that attaching the listed
   repos is part of what USER asked for.
-- **Pre-approve the attach and register tools** for the child where the call that creates it takes
-  a list of allowed tools. It only holds if the parent has them pre-approved too.
+- **A child attaches a repo only where its environment says so.** Its auto mode trusts the
+  source repo alone, and refuses the attach of any other, unless the environment's startup script
+  says attaching is expected setup ([README](../../../README.md#spawned-sessions)). A permission
+  rule in a repo's settings file and a list of allowed tools on the call that creates the session
+  change nothing.
 - **A session is created with one repository.** Tell USER so when they ask for several loaded: the
   others arrive by the setup steps, or by USER attaching them to the child.
 - **Set the effort only when USER names a level**, on the call that creates the session where it
