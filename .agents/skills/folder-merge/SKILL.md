@@ -1,6 +1,6 @@
 ---
 name: folder-merge
-description: Go through AGENT's open pull requests on a repo with personal folders, merge the ones confined to its own folder that nobody is working on, and ask USER through the question interface about the ones in doubt. Use when USER says "merge my wiki PRs", "go through the personal-folder PRs" or "clean up the wiki queue", and before saying which finished pages still wait.
+description: Go through AGENT's open pull requests on a repo with personal folders, merge the ones confined to its own folder that nobody is working on, and ask USER through the question interface about the ones in doubt. Use when USER says "merge my personal-folder PRs", "go through the PRs in my folder" or "which of my pages can land", and before saying which finished pages still wait.
 ---
 
 # Folder merge
