@@ -161,6 +161,15 @@ class Unanswered(unittest.TestCase):
         found = folder_merge.unanswered([edited], [], self.pushed, SETUP)
         self.assertEqual(found, ["human"])
 
+    def test_a_deleted_account_is_still_somebody(self):
+        gone = {"user": None, "body": "hold", "state": "COMMENTED",
+                "submitted_at": "2026-01-02T07:00:00Z"}
+        found = folder_merge.unanswered([], [gone], self.pushed, SETUP)
+        self.assertEqual(found, ["ghost"])
+        self.assertEqual(
+            folder_merge.verdict(status(unanswered=found), 24),
+            ("ask", ["comment by ghost after the head"]))
+
     def test_the_agent_answering_does_not_clear_it(self):
         found = folder_merge.unanswered([
             comment("other", "2026-01-02T07:00:00Z"),

@@ -97,7 +97,7 @@ def unanswered(comments, reviews, written, setup):
     logins = set()
     for post, stamp in said:
         user = post.get("user") or {}
-        login = user.get("login")
+        login = user.get("login") or "ghost"
         agent = login == setup["AGENT"] or (
             login == setup["USER"]
             and pr_status.agent_footer(post.get("body"), setup))
