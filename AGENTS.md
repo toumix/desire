@@ -137,13 +137,13 @@ How to check both, and commit signing, are in
 [`OPERATIONS.md`](OPERATIONS.md#identity-and-signing).
 
 ## Compute
-**A run the session would wait on goes to Modal, not the orb.** An orb bills by the minute while
-it is awake, restarts a run when it pauses, and stays awake only while an agent polls, so its cost
-is the agent's tokens as much as its CPU; a Modal Function bills by the second for the larger of the CPU and
-memory it requests and uses, and runs detached. The orb keeps what takes a few minutes or needs someone watching: tests,
-builds, pilots, the check that a run makes sense. A run longer than about ten minutes that no one
-watches is piloted on the orb, then shipped. The rules on GPU approval still bind. The mechanics are in
-[`OPERATIONS.md`](OPERATIONS.md#shipping-a-run-to-modal).
+**A run the session would wait on goes to Modal, not the orb.** An orb bills by the minute while it
+is awake, restarts a run when it pauses, and stays awake only while an agent polls, so its cost is
+the agent's tokens as much as its CPU; a Modal Function bills by the second for the larger of the
+CPU and memory it requests and uses, and runs detached. The orb keeps what takes a few minutes or
+needs someone watching: tests, builds, pilots, the check that a run makes sense. A run longer than
+about ten minutes that no one watches is piloted on the orb, then shipped. The rules on GPU approval
+still bind. The mechanics are in [`OPERATIONS.md`](OPERATIONS.md#shipping-a-run-to-modal).
 
 ## Turmoil
 When the rules are unclear or conflicting, never silently pick a side: tell USER directly in an
