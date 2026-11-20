@@ -168,6 +168,19 @@ and check, not fresh permission to push or merge.
   report it. An upstream pull request still needs USER's request ([Next repos](AGENTS.md#next-repos)),
   and merging still waits on [Merging on approval](#merging-on-approval).
 
+## Shipping a run to Modal
+- An Amp orb has the Modal token in its environment; install `modal[api-proxy-support]`, which the
+  sandbox's proxy needs.
+- Pilot on the orb first: one iteration on a slice of the data, its correctness check included.
+- Ship it with `modal run --detach`, the local entrypoint fanning out by `map` or `starmap`. Each
+  function also writes its result to a `modal.Dict`: a detached run's return values are lost once
+  the orb that launched it pauses, and `spawn().get()` over 8 KiB is refused through the proxy.
+- A batch run is a plain Function, preemptible at list price, not a Sandbox at three times it;
+  request the cores it uses, since billing is the larger of request and use.
+- Data goes in as a function input, not a Modal volume. Where a project routes its compute through
+  a platform of its own, a direct run says so on the item.
+- Stop the orb's copy of the run once the Modal one is past setup.
+
 ## Identity and signing
 Every write to GitHub — pull requests, comments, reviews, reactions — goes through the MCP tools.
 `GITHUB_TOKEN` is for reads only; it need not authenticate as the MCP account. Discover GitHub's

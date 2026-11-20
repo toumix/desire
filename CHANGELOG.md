@@ -5,6 +5,12 @@ Entries state the changes, no explanation of why.
 
 ## 2026-11-20
 
+**A run the session would wait on goes to Modal, not the orb** (`AGENTS.md`, `OPERATIONS.md`) — the
+orb keeps tests, builds, pilots and checks; a run of more than about ten minutes is piloted there and
+shipped to a detached Modal Function, its results in a `modal.Dict`. USER: *"also make sure you add
+this to desire so we don't spend too much orb time when it can be shipped to modal for cheaper"*,
+then *"not with marimo hub but with modal directly right?"*. Ruling: #237.
+
 **Daylight's check is a liveness word** (`AGENTS.md`, `README.md`) — keeps decategorification,
 replaces the password label and quoted value with an unquoted liveness word, and states that it is
 public text, not a secret. The first-turn check is unchanged. The README's pro tip is removed.
