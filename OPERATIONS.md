@@ -172,9 +172,11 @@ and check, not fresh permission to push or merge.
 - An Amp orb has the Modal token in its environment; install `modal[api-proxy-support]`, which the
   sandbox's proxy needs.
 - Pilot on the orb first: one iteration on a slice of the data, its correctness check included.
-- Ship it with `modal run --detach`, the local entrypoint fanning out by `map` or `starmap`. Each
-  function also writes its result to a `modal.Dict`: a detached run's return values are lost once
-  the orb that launched it pauses, and `spawn().get()` over 8 KiB is refused through the proxy.
+- Ship it with `modal run --detach`, the local entrypoint submitting by `spawn_map` or `spawn`,
+  never `map`, `starmap` or `remote`: a synchronous call is cancelled within two minutes of its
+  caller hanging up, so it dies when the orb pauses. Each function writes its result to a
+  `modal.Dict`, since `spawn_map` returns no handle and `spawn().get()` over 8 KiB is refused
+  through the proxy. Check that the app still has its tasks after the client has exited.
 - A batch run is a plain Function, preemptible at list price, not a Sandbox at three times it;
   request the cores it uses, since billing is the larger of request and use.
 - Data goes in as a function input, not a Modal volume. Where a project routes its compute through

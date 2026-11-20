@@ -7,7 +7,8 @@ Entries state the changes, no explanation of why.
 
 **A run the session would wait on goes to Modal, not the orb** (`AGENTS.md`, `OPERATIONS.md`) — the
 orb keeps tests, builds, pilots and checks; a run of more than about ten minutes is piloted there and
-shipped to a detached Modal Function, its results in a `modal.Dict`. USER: *"also make sure you add
+shipped to a detached Modal Function submitted by `spawn_map` or `spawn`, its results in a
+`modal.Dict`. USER: *"also make sure you add
 this to desire so we don't spend too much orb time when it can be shipped to modal for cheaper"*,
 then *"not with marimo hub but with modal directly right?"*. Ruling: #237.
 
