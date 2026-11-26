@@ -17,7 +17,9 @@ and keeps everything else moving. It runs these steps in order:
      every expected check passed
    - blocked on one named external action, which it asked for on its pull request the same turn
 
-   USER's explicit orders come first, then the asks that are due, then the next repos' bugs that
+   USER's explicit orders come first, then each ready pull request into next `main` that conflicts
+   with it beyond the changelog, which it merges `main` into and whose new checks it reads, then
+   the asks that are due, then the next repos' bugs that
    need no decision ([`OPERATIONS.md`](OPERATIONS.md#bugs-in-a-next-repo)), oldest first and without asking, then
    the items closest to done. Sub-agents take items in parallel when the board shows no collision
    between them; colliding items go one after the other, in the forced merge order. A bug that
@@ -26,7 +28,8 @@ and keeps everything else moving. It runs these steps in order:
    pull request, merged once its checks pass.
 6. **Everywhere else, build nothing new** beyond USER's explicit orders. Keep our open items
    moving instead: answer their review threads, fix their CI, resolve their conflicts, and do the
-   points of their plan USER approved.
+   points of their plan USER approved. On a repo with personal folders it runs `folder-merge` and
+   merges what says `merge`, after reading each note for a hold.
 7. **Close the turn**: the `WORK/` note of every item it worked, and one comment on the day PR, never
    that PR's description.
 
