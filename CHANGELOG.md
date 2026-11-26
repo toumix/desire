@@ -3,6 +3,19 @@
 What landed on `main`, newest first — when each rule started binding, and what it replaced.
 Entries state the changes, no explanation of why.
 
+## 2026-11-26
+
+**The sweep reads GitHub with `gh`'s token, counts old questions, checks its branch and reports
+unverified commits** (`template/memory/.agents/skills/sweep/`, `template/memory/scripts/lint_memory.py`,
+`OPERATIONS.md`) — `sweep.py` and `lint_memory.py --github` use the token `gh` is signed in with
+when neither `GITHUB_TOKEN` nor `GH_TOKEN` is set. Each unanswered line carries its date, and those
+that predate `--since` print as one count with the newest of their dates; a sweep with no `--since`
+lists them. The sweep exits 2, naming the branch to check out, when MEMORY_REPO has an open day PR
+and the checkout `WORK/` is read from is on another branch. It reports each of AGENT's commits that
+reads unverified on an open pull request of MEMORY_REPO or DESIRE_REPO. USER, live on 2026-11-26,
+to each issue's recommended default: *"sure sounds reasonable let's go"*. Rulings: #235, #236, #240,
+#241.
+
 ## 2026-11-20
 
 **Daylight's check is a liveness word** (`AGENTS.md`, `README.md`) — keeps decategorification,

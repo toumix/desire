@@ -241,6 +241,17 @@ class NetworkTest(unittest.TestCase):
         self.assertNotIn("Authorization", requests[0].headers)
         self.assertIn("Authorization", requests[0].unredirected_hdrs)
 
+    def test_with_no_variable_the_api_token_is_the_one_gh_holds(self):
+        requests = []
+        def response(request, timeout):
+            requests.append(request)
+            return io.StringIO("[]")
+        with patch.dict("os.environ", clear=True), patch.object(lint.sweep, "gh_token", return_value="held"), \
+                patch.object(lint, "urlopen", side_effect=response):
+            lint.GitHub(3).get("owner/project", "issues?state=open")
+        self.assertEqual(requests[0].get_header("Authorization"), "Bearer held")
+        self.assertIn("Authorization", requests[0].unredirected_hdrs)
+
     def test_head_fallback_does_not_send_tokens(self):
         calls = []
         def response(request, timeout):

@@ -364,15 +364,245 @@ class Memory(unittest.TestCase):
         self.assertNotIn("day PR", err)
 
 
+class Token(unittest.TestCase):
+    """A runtime can sign `gh` in and export no variable: the readers then
+    use `gh`'s token, and a variable still wins when one is set."""
+
+    def setUp(self):
+        from unittest import mock
+        self.mock = mock
+        sweep.gh_token.cache_clear()
+        self.addCleanup(sweep.gh_token.cache_clear)
+
+    def gh(self, **result):
+        return self.mock.patch.object(sweep.subprocess, "run", **result)
+
+    def test_a_variable_wins_and_gh_is_not_asked(self):
+        for name in ("GITHUB_TOKEN", "GH_TOKEN"):
+            with self.subTest(name=name), \
+                    self.mock.patch.dict(os.environ, {name: "exported"},
+                                         clear=True), \
+                    self.gh(side_effect=AssertionError("gh was asked")):
+                self.assertEqual(sweep.token(), "exported")
+
+    def test_GITHUB_TOKEN_wins_over_GH_TOKEN(self):
+        with self.mock.patch.dict(os.environ, {
+                "GITHUB_TOKEN": "first", "GH_TOKEN": "second"}, clear=True):
+            self.assertEqual(sweep.token(), "first")
+
+    def test_with_no_variable_the_token_is_the_one_gh_holds(self):
+        signed_in = self.mock.Mock(stdout="held\n")
+        with self.mock.patch.dict(os.environ, clear=True), \
+                self.gh(return_value=signed_in) as run:
+            self.assertEqual(sweep.token(), "held")
+            self.assertEqual(sweep.token(), "held")
+        self.assertEqual(run.call_args.args[0], ["gh", "auth", "token"])
+        self.assertEqual(run.call_count, 1)
+
+    def test_no_gh_or_a_signed_out_one_is_no_token(self):
+        import subprocess
+        for error in (FileNotFoundError("gh"),
+                      subprocess.CalledProcessError(1, "gh")):
+            sweep.gh_token.cache_clear()
+            with self.subTest(error=type(error).__name__), \
+                    self.mock.patch.dict(os.environ, clear=True), \
+                    self.gh(side_effect=error):
+                self.assertEqual(sweep.token(), "")
+
+
+class Fold(unittest.TestCase):
+    """Inside the window an unanswered line prints; before it, the lines are
+    one count carrying the newest of their dates, so a new one moves it."""
+
+    waiting = [("2022-03-01T10:00:00Z", "#1 old"),
+               ("2026-10-16T09:00:00Z", "#2 newest of the old"),
+               ("2026-11-24T01:00:00Z", "#3 inside the window")]
+
+    def test_lines_before_the_window_are_one_count_with_its_newest_date(self):
+        self.assertEqual(
+            sweep.fold("a/b", self.waiting, "2026-11-24T00:00:00Z"),
+            ["#3 inside the window",
+             "a/b: 2 older unanswered, newest 2026-10-16 — run with no"
+             " --since to list them"])
+
+    def test_a_line_written_at_the_window_s_start_is_inside_it(self):
+        self.assertEqual(
+            sweep.fold("a/b", self.waiting[2:], "2026-11-24T01:00:00Z"),
+            ["#3 inside the window"])
+
+    def test_with_no_window_every_line_prints(self):
+        self.assertEqual(sweep.fold("a/b", self.waiting, ""),
+                         ["#1 old", "#2 newest of the old",
+                          "#3 inside the window"])
+
+    def test_nothing_waiting_is_nothing(self):
+        self.assertEqual(sweep.fold("a/b", [], "2026-11-24T00:00:00Z"), [])
+
+
+class Swept(unittest.TestCase):
+    """The whole sweep of a repo against a fake GitHub: an unanswered line
+    carries its date, a whole-repo sweep counts the old ones, and a sweep of
+    named items lists them."""
+
+    setup = {"USER": "ada", "AGENT": "ada-agents", "APPROVE_EMOJI":
+             "rocket", "MEMORY_REPO": "a/memory", "DESIRE_REPO": "a/rules",
+             "WORK_REPOS": [], "AGENT_FOOTERS": []}
+
+    def setUp(self):
+        quiet = {"rocket": 0, "eyes": 0}
+        issues = {
+            7: {"number": 7, "user": {"login": "ada"}, "body": "why?",
+                "created_at": "2026-10-16T09:00:00Z", "reactions": quiet,
+                "html_url": "u/7"},
+            8: {"number": 8, "user": {"login": "ada"}, "body": "and this?",
+                "created_at": "2026-11-24T01:00:00Z", "reactions": quiet,
+                "html_url": "u/8"}}
+
+        def get(repo, path):
+            if path == "issues?state=open":
+                return list(issues.values())
+            if path.endswith("/comments") or path.startswith("issues?state=closed"):
+                return []
+            return issues[int(path.split("/")[1])]
+        original = sweep.get
+        sweep.get = get
+        self.addCleanup(setattr, sweep, "get", original)
+
+    def test_a_whole_repo_sweep_counts_what_predates_the_window(self):
+        self.assertEqual(
+            sweep.sweep("a/b", [], "2026-11-24T00:00:00Z", self.setup),
+            ["#8 unanswered ada issue of 2026-11-24: u/8",
+             "a/b: 1 older unanswered, newest 2026-10-16 — run with no"
+             " --since to list them"])
+
+    def test_a_sweep_of_named_items_lists_them_whatever_the_window(self):
+        self.assertEqual(
+            sweep.sweep("a/b", [7], "2026-11-24T00:00:00Z", self.setup),
+            ["#7 unanswered ada issue of 2026-10-16: u/7"])
+
+
+class Unsigned(unittest.TestCase):
+    """GitHub alone says whether a commit is verified, so the sweep reads it
+    for AGENT's commits on the open pull requests."""
+
+    setup = {"AGENT": "ada-agents"}
+
+    def commit(self, sha, verified, login="ada-agents", name="ada-agents"):
+        return {"sha": sha, "html_url": f"u/{sha}",
+                "author": login and {"login": login},
+                "commit": {"author": {"name": name}, "verification": {
+                    "verified": verified,
+                    "reason": "valid" if verified else "unsigned"}}}
+
+    def patch(self, commits):
+        original = sweep.get
+        sweep.get = lambda repo, path: (
+            [{"number": 5}] if path == "pulls?state=open" else commits)
+        self.addCleanup(setattr, sweep, "get", original)
+
+    def test_an_unverified_commit_of_AGENT_s_is_a_finding(self):
+        self.patch([self.commit("a" * 40, True), self.commit("b" * 40, False)])
+        self.assertEqual(sweep.unsigned("a/memory", self.setup), [
+            "a/memory#5: commit bbbbbbb of ada-agents's reads unsigned on"
+            " GitHub, not verified: u/" + "b" * 40])
+
+    def test_a_commit_GitHub_links_to_no_account_is_AGENT_s_by_its_name(self):
+        self.patch([self.commit("c" * 40, False, login=None)])
+        self.assertEqual(len(sweep.unsigned("a/memory", self.setup)), 1)
+
+    def test_someone_else_s_unverified_commit_is_not_ours_to_report(self):
+        self.patch([self.commit("d" * 40, False, login="ada", name="ada")])
+        self.assertEqual(sweep.unsigned("a/memory", self.setup), [])
+
+
+class OnDayBranch(unittest.TestCase):
+    """`WORK/` is read from the checkout, and the day's notes are on the open
+    day PR's branch: from any other branch the notes check would be about
+    yesterday, so the sweep stops and names the branch."""
+
+    setup = {"MEMORY_REPO": "a/memory"}
+
+    def patch(self, pulls, branch):
+        from unittest import mock
+        for name, value in (("get", lambda repo, path: pulls),
+                            ("checked_out", lambda root: branch)):
+            patcher = mock.patch.object(sweep, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def day(self, ref="day-2026-09-07"):
+        return {"title": "2026-09-07", "head": {"ref": ref}}
+
+    def test_main_with_a_day_PR_open_is_refused_naming_its_branch(self):
+        self.patch([self.day()], "main")
+        with self.assertRaisesRegex(sweep.WrongBranch,
+                                    "check out day-2026-09-07 first"):
+            sweep.on_day_branch(pathlib.Path("clone"), self.setup)
+
+    def test_a_detached_HEAD_is_refused_too(self):
+        self.patch([self.day()], "")
+        with self.assertRaises(sweep.WrongBranch):
+            sweep.on_day_branch(pathlib.Path("clone"), self.setup)
+
+    def test_the_day_PR_s_own_branch_passes(self):
+        self.patch([self.day()], "day-2026-09-07")
+        sweep.on_day_branch(pathlib.Path("clone"), self.setup)
+
+    def test_with_no_day_PR_open_any_branch_passes(self):
+        self.patch([{"title": "OTHERS/x.md", "head": {"ref": "x"}}], "main")
+        sweep.on_day_branch(pathlib.Path("clone"), self.setup)
+
+    def test_a_directory_that_is_no_checkout_has_no_branch_to_be_wrong(self):
+        self.patch([self.day()], None)
+        sweep.on_day_branch(pathlib.Path("clone"), self.setup)
+
+    def test_the_branch_is_read_from_git(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            self.assertIsNone(sweep.checked_out(root))
+            subprocess.run(["git", "init", "-q", "-b", "day-2026-09-07",
+                            directory], check=True)
+            self.assertEqual(sweep.checked_out(root), "day-2026-09-07")
+
+    def test_a_git_that_cannot_be_run_is_raised_not_read_as_no_checkout(self):
+        import subprocess
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / ".git").mkdir()
+            for error in (FileNotFoundError("git"),
+                          subprocess.TimeoutExpired("git", 10)):
+                with self.subTest(error=type(error).__name__), \
+                        mock.patch.object(sweep.subprocess, "run",
+                                          side_effect=error), \
+                        self.assertRaises(type(error)):
+                    sweep.checked_out(root)
+
+
 class Incomplete(unittest.TestCase):
     """A dropped connection is an incomplete sweep, exit 2, never findings."""
+
+    def test_the_wrong_branch_exits_2_and_says_which_to_check_out(self):
+        from unittest import mock
+        stderr = io.StringIO()
+        with mock.patch.object(sweep, "sweep", side_effect=sweep.WrongBranch(
+                    "check out day-2026-09-07 first")), \
+                mock.patch.object(sweep, "find_config", return_value=None), \
+                mock.patch.object(sweep, "config", return_value={}), \
+                contextlib.redirect_stderr(stderr):
+            self.assertEqual(sweep.main(["owner/repo"]), 2)
+        self.assertIn("owner/repo: check out day-2026-09-07 first",
+                      stderr.getvalue())
 
     def test_a_dropped_connection_exits_2(self):
         import http.client
         from unittest import mock
+        import subprocess
         for error in (http.client.RemoteDisconnected("closed"),
                       ConnectionResetError("reset"),
-                      urllib.error.URLError("denied")):
+                      urllib.error.URLError("denied"),
+                      subprocess.TimeoutExpired("git", 10)):
             with self.subTest(error=type(error).__name__), \
                     mock.patch.object(sweep, "sweep", side_effect=error), \
                     mock.patch.object(sweep, "find_config", return_value=None), \
