@@ -25,10 +25,10 @@ item sections, which stay authoritative:
   repo, and a Markdown fragment matches a heading or an explicit anchor.
 `WORK/TEMPLATE.md` is a shape and exempt.
 
-`--github` reads every open issue and pull request of each WORK_REPO with `GITHUB_TOKEN`
-or `GH_TOKEN`, which needs read access to all of them: an open item we authored, adopted
-or a note cites needs a note, a closed one has none, and a read date older than the
-item's last update (whole UTC days) is stale. `--external-links` sends HEAD, then GET,
+`--github` reads every open issue and pull request of each WORK_REPO with `GITHUB_TOKEN`,
+`GH_TOKEN` or the token `gh` is signed in with, which needs read access to all of them: an
+open item we authored, adopted or a note cites needs a note, a closed one has none, and a
+read date older than the item's last update (whole UTC days) is stale. `--external-links` sends HEAD, then GET,
 with no token: 404 and 410 are findings, other failures leave the link unverified. A
 private URL's 404 can mean no access rather than deleted.
 
@@ -300,7 +300,7 @@ class GitHub:
             url = f"https://api.github.com/repos/{repo}/{path}"
             url += ("&" if "?" in url else "?") + f"per_page=100&page={page}"
             headers = {"User-Agent": "memory-lint", "Accept": "application/vnd.github+json"}
-            token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+            token = sweep.token()
             request = Request(url, headers=headers)
             if token:
                 request.add_unredirected_header("Authorization", f"Bearer {token}")

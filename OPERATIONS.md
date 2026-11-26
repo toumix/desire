@@ -63,7 +63,8 @@ concludes "nothing to do" without a clean sweep: checkboxes, CI and behind-count
 agents wrote themselves, and only the sweep reads what USER did. It flags every
 APPROVE_EMOJI react from USER on a body or a comment across both endpoints, and every thread where
 USER spoke last — a thread is answered when anyone other than USER has replied since, and which
-agent closed it does not matter.
+agent closed it does not matter. It reads GitHub with `GITHUB_TOKEN` or `GH_TOKEN`, and with the
+token `gh` is signed in with when neither is set.
 
 `--since` reads the comments as a delta; widen the window after a turn runs late or dies. The sweep
 also lists the issues closed inside the window with their `state_reason` and who closed them, since
@@ -71,7 +72,8 @@ closing an issue is an answer that leaves no thread. Reacts ignore `--since`: a 
 state and is reported whatever its age until the thing it sits on closes. A USER question nobody has
 answered is reported whatever its age too, unless the pipeline 👀'd it and it predates the window —
 so a question landing between two sweeps is never lost, an old one goes quiet once a turn says it
-received it, and a sweep with no `--since` reports the whole backlog.
+received it, and a sweep with no `--since` reports the whole backlog. Each unanswered line carries
+its date, and those that predate the window print as one count with the newest of their dates.
 
 The sweep marks a `👀` flag when anyone but USER has reacted, so a turn can tell a backlog from a
 queue. An instruction with no react was never received, one with 👀 is in progress, and the react is what
@@ -124,7 +126,8 @@ the docstring of
   GitHub.
 - `sweep.py` reads the directory against the live open items: a required item with no file, a file
   with no open item, and a file whose `read` date is older than its item's last update are all
-  findings.
+  findings. It reads the directory from its checkout, and exits 2 naming the branch to check out
+  when MEMORY_REPO has an open day PR and the checkout is on another branch.
 - `OTHERS/<person>.md` records what they own, what they have landed and what of theirs touches the
   work we do; a `WORK/` note records the one item.
 
@@ -180,7 +183,8 @@ check the branch's authors before pushing with
 Amp orbs provide managed signing: preserve `gpg.*`, `user.signingkey` and `commit.gpgsign` while
 setting authorship. No private signing key needs copying into the orb. Do not run the legacy hook
 with a forged `CLAUDE_CODE_REMOTE` flag: it clears signing settings. After a push, read GitHub's
-verification result before claiming Verified.
+verification result before claiming Verified. The sweep reports each of AGENT's commits that reads
+unverified on an open pull request of MEMORY_REPO or DESIRE_REPO.
 
 On Claude Code on the web, the SessionStart hook handles identity and optional SSH signing via
 `AGENTS_SIGNING_KEY`. Without that variable it commits unsigned; with it, the key must be registered

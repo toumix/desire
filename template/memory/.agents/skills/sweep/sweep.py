@@ -2,24 +2,29 @@
 """Sweep open PRs and issues for USER signal the pipeline has not acted on:
 bodies and threads where USER spoke last, APPROVE_EMOJI reacts from USER, the
 issues closed inside the window, MEMORY_REPO's open-PR count, and whether
-every open item of a WORK_REPO that needs one has its `WORK/<repo>/<number>.md` note in MEMORY_REPO. A finding is marked 👀 when the
-pipeline has reacted to say it received it. config.env is the ground truth for
+every open item of a WORK_REPO that needs one has its `WORK/<repo>/<number>.md` note in MEMORY_REPO, and AGENT's commits GitHub does
+not read as verified on the open pull requests of MEMORY_REPO and DESIRE_REPO. A
+finding is marked 👀 when the pipeline has reacted to say it received it. config.env is the ground truth for
 USER, the repos and the emoji, and it sits at the root of this clone;
 AGENTS.md's rules say what to do with a finding.
 
 Usage: sweep.py [--since <ISO8601 UTC, e.g. 2026-08-18T00:00:00Z>] <owner/repo>
                 [number...]
-       # no numbers: every open PR and issue; --since windows the closes
-       # and quiets a question the pipeline already 👀'd
+       # no numbers: every open PR and issue; --since windows the closes,
+       # quiets a question the pipeline already 👀'd and counts the other
+       # questions older than it on one line
 Exit 0 and "clean" on a clean sweep, exit 1 with one line per finding, exit 2
-when GitHub could not be read — an incomplete sweep is neither clean nor a
-finding, and reading it as clean is how a live 🚀 goes unanswered.
+when GitHub could not be read or `WORK/` is on the wrong branch — an incomplete
+sweep is neither clean nor a finding, and reading it as clean is how a live 🚀
+goes unanswered.
 """
+import functools
 import http.client
 import json
 import os
 import pathlib
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -71,12 +76,34 @@ def config(path):
     return setup
 
 
+class WrongBranch(Exception):
+    """`WORK/` cannot be checked from this checkout: see `on_day_branch`."""
+
+
+@functools.cache
+def gh_token():
+    """The token `gh` is signed in with, "" when there is no `gh` or it is
+    signed out. Some runtimes sign `gh` in and export no variable."""
+    try:
+        return subprocess.run(
+            ["gh", "auth", "token"], capture_output=True, text=True,
+            timeout=10, check=True).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def token():
+    """GITHUB_TOKEN, else GH_TOKEN, else `gh`'s own, else none."""
+    return (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+            or gh_token())
+
+
 def get(repo, path):
     """A GitHub REST resource, every page of a listing. A page holds 100 and
     `discopy/discopy` had 153 open items the day this stopped reading one page:
     the tail is the oldest, so a 🚀 on an old issue was invisible for good.
     Unauthenticated GETs work on public repos but are rate-limited to 60/hr;
-    GITHUB_TOKEN or GH_TOKEN is used when set."""
+    `token` is sent when there is one."""
     results, page = [], 1
     while True:
         request = urllib.request.Request(
@@ -84,9 +111,8 @@ def get(repo, path):
             + ("&" if "?" in path else "?") + f"per_page=100&page={page}",
             headers={"User-Agent": "sweep",
                      "Accept": "application/vnd.github+json"})
-        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-        if token:
-            request.add_header("Authorization", f"Bearer {token}")
+        if token():
+            request.add_header("Authorization", f"Bearer {token()}")
         with urllib.request.urlopen(request) as response:
             items = json.load(response)
         if not isinstance(items, list):  # a single issue, comment or user
@@ -233,15 +259,18 @@ def memory(repo):
 
 
 def item(repo, number, setup, since, cache):
-    """The findings on one PR or issue: USER's APPROVE_EMOJI on the body or on
-    any comment, and every thread where USER spoke last. GitHub splits comments
-    across two endpoints, review comments threaded by in_reply_to_id and the
-    conversation tab flat; both are swept, and so are the bodies. A body USER
+    """What is found on one PR or issue, in two lists: USER's APPROVE_EMOJI on
+    the body or on any comment, and every thread where USER spoke last, each
+    with the time USER wrote it so that `fold` can count the old ones. GitHub
+    splits comments across two endpoints, review comments threaded by
+    in_reply_to_id and the conversation tab flat; both are swept, and so are
+    the bodies. A body USER
     wrote is the thread when nothing else was said on it, which is the shape a
     standing order arrives in; once anyone comments, that thread's last word
     answers for it and the body would only report it twice. `asking` decides
     which of the two are still waiting on us."""
-    findings, threads, body = [], {}, get(repo, f"issues/{number}")
+    findings, waiting, threads = [], [], {}
+    body = get(repo, f"issues/{number}")
     kind = f"issues/{number}/reactions"
     if approved(repo, kind, body, setup, cache):
         findings.append(
@@ -264,17 +293,46 @@ def item(repo, number, setup, since, cache):
         kind = f"{endpoint}/comments/{asked['id']}/reactions"
         flag = asking(repo, kind, asked, setup, since, cache)
         if flag is not None:
-            findings.append(
-                f"#{number} unanswered {setup['USER']} comment:"
-                f" {asked['html_url']}" + flag)
+            waiting.append((asked["created_at"], (
+                f"#{number} unanswered {setup['USER']} comment of"
+                f" {asked['created_at'][:10]}: {asked['html_url']}" + flag)))
     kind = f"issues/{number}/reactions"
     flag = None if threads else asking(repo, kind, body, setup, since, cache)
     if flag is not None:
-        findings.append(
+        waiting.append((body["created_at"], (
             f"#{number} unanswered {setup['USER']}"
-            f" {'pull request' if 'pull_request' in body else 'issue'}:"
-            f" {body['html_url']}" + flag)
-    return findings
+            f" {'pull request' if 'pull_request' in body else 'issue'} of"
+            f" {body['created_at'][:10]}: {body['html_url']}" + flag)))
+    return findings, waiting
+
+
+def fold(repo, waiting, since):
+    """The unanswered lines of a sweep, those USER wrote before the window as
+    one count with the newest of their dates. An old question that never got a
+    👀 is printed by every sweep, and a new one landing on an old item would be
+    one more undated line among them; the count and its date move when one
+    does. `waiting` pairs the time USER wrote with the line. Without a window
+    nothing is older than it, so every line prints."""
+    older = sorted(written for written, _ in waiting if written < since)
+    return [line for written, line in waiting if written >= since] + ([
+        f"{repo}: {len(older)} older unanswered, newest {older[-1][:10]} —"
+        " run with no --since to list them"] if older else [])
+
+
+def unsigned(repo, setup):
+    """AGENT's commits on an open pull request that GitHub does not read as
+    verified, with GitHub's reason. A signature is checked by GitHub alone,
+    after the push, so an unsigned commit looks like any other from the clone
+    that made it."""
+    return [
+        f"{repo}#{pull['number']}: commit {commit['sha'][:7]} of"
+        f" {setup['AGENT']}'s reads {commit['commit']['verification']['reason']}"
+        f" on GitHub, not verified: {commit['html_url']}"
+        for pull in get(repo, "pulls?state=open")
+        for commit in get(repo, f"pulls/{pull['number']}/commits")
+        if not commit["commit"]["verification"]["verified"]
+        and setup["AGENT"] in ((commit["author"] or {}).get("login"),
+                               commit["commit"]["author"]["name"])]
 
 
 def notes(have, want):
@@ -339,6 +397,37 @@ def memory_clone():
     return root if (root / "WORK").is_dir() else None
 
 
+def checked_out(root):
+    """The branch `root` is on, "" on a detached HEAD, `None` when `root` is
+    not a git checkout."""
+    if not (root / ".git").exists():
+        return None
+    try:
+        return subprocess.run(
+            ["git", "-C", str(root), "symbolic-ref", "--short", "-q", "HEAD"],
+            capture_output=True, text=True, timeout=10).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def on_day_branch(root, setup):
+    """Raise `WrongBranch` when MEMORY_REPO has an open day PR and `root` is on
+    another branch. `WORK/` is read from the checkout, and a day's notes are on
+    its day PR's branch until the next day opens: read from `main`, every note
+    written today is missing and every note deleted today has outlived its
+    item."""
+    branches = sorted(
+        pull["head"]["ref"]
+        for pull in get(setup["MEMORY_REPO"], "pulls?state=open")
+        if DAY.match(pull["title"]))
+    here = checked_out(root)
+    if branches and here is not None and here not in branches:
+        raise WrongBranch(
+            f"WORK/ is read from {root}, on {here or 'a detached HEAD'!r},"
+            f" and the day's notes are on {branches[-1]!r}: check out"
+            f" {branches[-1]} first")
+
+
 def uncharted(repo, setup, cache):
     """What `WORK/<repo>/` and the repo's open items say about each other.
 
@@ -357,6 +446,7 @@ def uncharted(repo, setup, cache):
         print(f"{repo}: MEMORY_REPO carries no WORK/, notes unchecked",
               file=sys.stderr)
         return []
+    on_day_branch(root, setup)
     name = repo.split("/")[-1]
     directory = root / "WORK" / name
     files = {int(note.stem): note for note in directory.glob("*.md")
@@ -386,17 +476,21 @@ def uncharted(repo, setup, cache):
 
 def sweep(repo, numbers, since, setup):
     """One line per finding, empty when the sweep is clean."""
-    cache, findings = {}, []
-    if repo == setup["MEMORY_REPO"] and not numbers:
+    cache, findings, waiting, whole = {}, [], [], not numbers
+    if repo == setup["MEMORY_REPO"] and whole:
         findings += memory(repo)
-    if not numbers:
+    if whole:
         findings += uncharted(repo, setup, cache)
+        if repo in (setup["MEMORY_REPO"], setup["DESIRE_REPO"]):
+            findings += unsigned(repo, setup)
         findings += closed_since(repo, since)
         numbers = sorted({
             issue["number"] for issue in get(repo, "issues?state=open")})
     for number in numbers:
-        findings += item(repo, number, setup, since, cache)
-    return findings
+        found, asked = item(repo, number, setup, since, cache)
+        findings += found
+        waiting += asked
+    return findings + fold(repo, waiting, since if whole else "")
 
 
 def main(arguments):
@@ -406,6 +500,10 @@ def main(arguments):
     try:
         findings = sweep(arguments[0], [int(n) for n in arguments[1:]], since,
                          config(find_config()))
+    except WrongBranch as error:
+        print(f"{arguments[0]}: {error}, the sweep is incomplete",
+              file=sys.stderr)
+        return 2
     except (OSError, http.client.HTTPException) as error:
         print(f"{arguments[0]}: unreadable (GitHub or a local file), the sweep is incomplete and"
               f" says nothing about this repo: {error}", file=sys.stderr)
