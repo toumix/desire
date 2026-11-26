@@ -92,6 +92,9 @@ it all merges into one repo; the drift between the two is measured every night a
 
 - Next `main` is upstream `main` plus work meant to go upstream. Agents merge into it themselves
   once its checks pass, with no human review.
+- The turn that merges into next `main` then measures against it every pull request there that is
+  ready and held for USER's read, and names on the day PR those that now conflict beyond the
+  changelog ([`OPERATIONS.md`](OPERATIONS.md#measuring-against-git-history)).
 - Down: upstream `main` is merged into next `main` every night, never rebased.
 - Up: an upstream PR is opened only at USER's request, cut from upstream `main` and small enough to
   read; agents propose the slices.
@@ -128,7 +131,14 @@ USER's approving review is the go to merge: an agent merges one of our pull requ
 without asking, once its checks pass and nothing waits on an agent
 ([`OPERATIONS.md`](OPERATIONS.md#merging-on-approval)).
 
+Before merging an item it did not open, a session reads the item's `WORK/` note and the day PR's
+comments since the item's last push: USER's word there to leave it or not to merge wins, and the
+session asks USER. A session that hears USER say to leave an item writes it in that item's note
+the same turn.
+
 Watch a PR through an active event subscription where available; capability alone is not delivery.
+A pull request on MEMORY_REPO is not watched: a turn that opens one unsubscribes at once, and a
+wake that still comes from one is read and closed in one line.
 Schedule a timed PR check-in only when USER asks for one. If event delivery is unavailable, report
 it; follow-up needs a new turn. Setup details are in [`OPERATIONS.md`](OPERATIONS.md#watching-a-pull-request).
 
