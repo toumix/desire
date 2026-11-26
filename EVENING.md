@@ -17,9 +17,9 @@ and keeps everything else moving. It runs these steps in order:
      every expected check passed
    - blocked on one named external action, which it asked for on its pull request the same turn
 
-   USER's explicit orders come first, then each ready pull request that conflicts with next `main`
-   beyond the changelog, which it merges `main` into and whose new checks it reads, then the asks
-   that are due, then the next repos' bugs that
+   USER's explicit orders come first, then each ready pull request into next `main` that conflicts
+   with it beyond the changelog, which it merges `main` into and whose new checks it reads, then
+   the asks that are due, then the next repos' bugs that
    need no decision ([`OPERATIONS.md`](OPERATIONS.md#bugs-in-a-next-repo)), oldest first and without asking, then
    the items closest to done. Sub-agents take items in parallel when the board shows no collision
    between them; colliding items go one after the other, in the forced merge order. A bug that

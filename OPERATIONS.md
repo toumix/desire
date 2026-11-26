@@ -145,7 +145,8 @@ pull request must also pass its checks, merge cleanly and have no thread waiting
 
 ## Watching a pull request
 In Amp, discover `create_github_subscription` and subscribe this thread to comments and reviews
-after opening a PR, and to CI for the exact head SHA and branch after each push, with
+after opening a PR outside MEMORY_REPO, and to CI for the exact head SHA and branch after each push
+there, with
 `automatic: true`. Supply `branch` only for CI. Check the returned subscription is enabled and
 unblocked; an existing paused listener is not active. Access depends on the connected GitHub
 installation and workspace, not just the runtime having the tool.

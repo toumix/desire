@@ -8,19 +8,20 @@ Entries state the changes, no explanation of why.
 **A ready pull request is kept mergeable on a next repo** (`AGENTS.md`, `EVENING.md`) — the turn
 that merges into next `main` measures every pull request there that is ready and held for USER's
 read, and names on the day PR those that now conflict beyond the changelog; 🌙 Evening merges `main`
-into those after USER's explicit orders and before the asks that are due. USER, live on 2026-11-26, to the issue's option 1: *"sure sounds
+into those that target it, after USER's explicit orders and before the asks that are due. USER, live on 2026-11-26, to the issue's option 1: *"sure sounds
 reasonable let's go"*. Ruling: #243.
 
 **🌙 Evening merges what the folder rule has due** (`EVENING.md`) — on a repo with personal folders
 it runs `folder-merge` and merges what says `merge`, after reading each note for a hold. USER, live
 on 2026-11-26, to the issue's default: *"sure sounds reasonable let's go"*. Ruling: #239.
 
-**A pull request on MEMORY_REPO is not watched** (`AGENTS.md`) — a turn that opens one unsubscribes
-at once, and a wake that still comes from one is read and closed in one line. USER, 2026-11-18:
+**A pull request on MEMORY_REPO is not watched** (`AGENTS.md`, `OPERATIONS.md`) — a turn that opens
+one unsubscribes at once, and a wake that still comes from one is read and closed in one line; the
+Amp setup subscribes to pull requests outside MEMORY_REPO. USER, 2026-11-18:
 *"never listen to memory notifications the last four rounds are completely useless"*. Ruling: #230.
 
 **A merge reads the item's note and the day PR first** (`AGENTS.md`) — before merging an item it did
-not open, a session reads the item's `WORK/` note and the day PR's comments since its last push;
+not open, a session reads the item's `WORK/` note and each day PR's comments since its last push;
 USER's word there to leave it or not to merge wins, and the session asks USER. A session that hears
 USER say to leave an item writes it in that item's note the same turn. USER, live on 2026-11-26, to
 the issue's default: *"sure sounds reasonable let's go"*. Ruling: #224.

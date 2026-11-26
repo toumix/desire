@@ -131,7 +131,7 @@ USER's approving review is the go to merge: an agent merges one of our pull requ
 without asking, once its checks pass and nothing waits on an agent
 ([`OPERATIONS.md`](OPERATIONS.md#merging-on-approval)).
 
-Before merging an item it did not open, a session reads the item's `WORK/` note and the day PR's
+Before merging an item it did not open, a session reads the item's `WORK/` note and each day PR's
 comments since the item's last push: USER's word there to leave it or not to merge wins, and the
 session asks USER. A session that hears USER say to leave an item writes it in that item's note
 the same turn.
