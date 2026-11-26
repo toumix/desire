@@ -399,15 +399,13 @@ def memory_clone():
 
 def checked_out(root):
     """The branch `root` is on, "" on a detached HEAD, `None` when `root` is
-    not a git checkout."""
+    not a git checkout. A `git` that cannot be run raises, so a checkout
+    nobody could read is an incomplete sweep and never one with no branch."""
     if not (root / ".git").exists():
         return None
-    try:
-        return subprocess.run(
-            ["git", "-C", str(root), "symbolic-ref", "--short", "-q", "HEAD"],
-            capture_output=True, text=True, timeout=10).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        return None
+    return subprocess.run(
+        ["git", "-C", str(root), "symbolic-ref", "--short", "-q", "HEAD"],
+        capture_output=True, text=True, timeout=10).stdout.strip()
 
 
 def on_day_branch(root, setup):
@@ -504,7 +502,8 @@ def main(arguments):
         print(f"{arguments[0]}: {error}, the sweep is incomplete",
               file=sys.stderr)
         return 2
-    except (OSError, http.client.HTTPException) as error:
+    except (OSError, http.client.HTTPException,
+            subprocess.SubprocessError) as error:
         print(f"{arguments[0]}: unreadable (GitHub or a local file), the sweep is incomplete and"
               f" says nothing about this repo: {error}", file=sys.stderr)
         return 2

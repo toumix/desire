@@ -378,9 +378,17 @@ class Token(unittest.TestCase):
         return self.mock.patch.object(sweep.subprocess, "run", **result)
 
     def test_a_variable_wins_and_gh_is_not_asked(self):
-        with self.mock.patch.dict(os.environ, {"GH_TOKEN": "exported"}), \
-                self.gh(side_effect=AssertionError("gh was asked")):
-            self.assertEqual(sweep.token(), "exported")
+        for name in ("GITHUB_TOKEN", "GH_TOKEN"):
+            with self.subTest(name=name), \
+                    self.mock.patch.dict(os.environ, {name: "exported"},
+                                         clear=True), \
+                    self.gh(side_effect=AssertionError("gh was asked")):
+                self.assertEqual(sweep.token(), "exported")
+
+    def test_GITHUB_TOKEN_wins_over_GH_TOKEN(self):
+        with self.mock.patch.dict(os.environ, {
+                "GITHUB_TOKEN": "first", "GH_TOKEN": "second"}, clear=True):
+            self.assertEqual(sweep.token(), "first")
 
     def test_with_no_variable_the_token_is_the_one_gh_holds(self):
         signed_in = self.mock.Mock(stdout="held\n")
@@ -557,6 +565,20 @@ class OnDayBranch(unittest.TestCase):
                             directory], check=True)
             self.assertEqual(sweep.checked_out(root), "day-2026-09-07")
 
+    def test_a_git_that_cannot_be_run_is_raised_not_read_as_no_checkout(self):
+        import subprocess
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / ".git").mkdir()
+            for error in (FileNotFoundError("git"),
+                          subprocess.TimeoutExpired("git", 10)):
+                with self.subTest(error=type(error).__name__), \
+                        mock.patch.object(sweep.subprocess, "run",
+                                          side_effect=error), \
+                        self.assertRaises(type(error)):
+                    sweep.checked_out(root)
+
 
 class Incomplete(unittest.TestCase):
     """A dropped connection is an incomplete sweep, exit 2, never findings."""
@@ -576,9 +598,11 @@ class Incomplete(unittest.TestCase):
     def test_a_dropped_connection_exits_2(self):
         import http.client
         from unittest import mock
+        import subprocess
         for error in (http.client.RemoteDisconnected("closed"),
                       ConnectionResetError("reset"),
-                      urllib.error.URLError("denied")):
+                      urllib.error.URLError("denied"),
+                      subprocess.TimeoutExpired("git", 10)):
             with self.subTest(error=type(error).__name__), \
                     mock.patch.object(sweep, "sweep", side_effect=error), \
                     mock.patch.object(sweep, "find_config", return_value=None), \
