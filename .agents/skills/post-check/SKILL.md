@@ -28,8 +28,9 @@ What it finds:
 - **Public target** (skipped when the target is private): every WORK_REPOS or MEMORY_REPO repo
   named as `owner/repo` or `name#N` that is private or that the token cannot read, and every line
   matching a regex of `--denylist` (one per line, `#` comments), code included. The denylist lives
-  in MEMORY_REPO; this skill ships none. With `--range`, the commit messages are scanned too. Fix
-  every hit before the first post or push.
+  in MEMORY_REPO; this skill ships none. With `--range`, the commit messages and the lines each
+  commit adds are scanned too, `TODO.md`'s verbatim prompt above all. Fix every hit before the
+  first post or push.
 - **Commits** (`--range`): each author is AGENT <AGENT_EMAIL>; a bad or revoked signature is a
   finding; unsigned commits are listed, and are a finding with `--signed`. See
   [Identity and signing](../../../OPERATIONS.md#identity-and-signing).

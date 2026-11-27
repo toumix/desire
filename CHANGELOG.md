@@ -66,6 +66,12 @@ the file. Replaces: "Pre-approve the attach and register tools for the child"; t
 it for good"*, *"i don't want the desire readme to have my list of repos explicitly added"*,
 *"attaching a repo could be allowed by default?"*, *"why do we need two scripts? merge them"*. Ruling: #216.
 
+## 2026-11-12
+
+**`post-check --range` scans the lines each commit adds** (`.agents/skills/post-check/`) — a
+private repo name or a denylist hit in a file a commit adds is a finding, as in its message.
+Replaces: commit messages only. USER: 🚀 on #215.
+
 ## 2026-11-10
 
 **An absolute rule carries its exception; a stale caution is deleted; spawn sets the effort**
